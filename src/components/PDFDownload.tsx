@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import jsPDF from 'jspdf'
-import type { Scores, DimensionAnalysis, RecommendedProduct, ActionPlanItem } from '../utils/scoring'
+import type { Scores, DimensionAnalysis, RecommendedProduct } from '../utils/scoring'
 
 interface PDFDownloadProps {
   scores: Scores
@@ -13,7 +13,6 @@ interface PDFDownloadProps {
   }
   analyses: DimensionAnalysis[]
   productRecommendations: RecommendedProduct[]
-  actionPlan: ActionPlanItem[]
 }
 
 class PDFLayout {
@@ -150,7 +149,7 @@ class PDFLayout {
 }
 
 export default function PDFDownload(props: PDFDownloadProps) {
-  const { scores, context, maturity, findings, analyses, productRecommendations, actionPlan } = props
+  const { scores, context, maturity, findings, analyses, productRecommendations } = props
   const [generating, setGenerating] = useState(false)
 
   const generatePDF = useCallback(async () => {
@@ -224,24 +223,11 @@ export default function PDFDownload(props: PDFDownloadProps) {
         layout.addParagraph(analysis.narrative, analysis.isSubdimension ? 3 : 0)
       }
 
-      // ── Scholingsadvies ───────────────────────────────────
+      // ── Hoe verder ───────────────────────────────────────
       if (productRecommendations.length > 0) {
-        layout.addSectionTitle('Scholingsadvies')
-        layout.addParagraph('Op basis van jullie scores adviseren wij de volgende stappen om de AI-geletterdheid op jullie school te versterken.')
-
+        layout.addSectionTitle('Hoe verder?')
         for (const rec of productRecommendations) {
-          layout.addSubTitle(rec.name, `(${rec.format})`)
           layout.addParagraph(rec.reason)
-        }
-      }
-
-      // ── Actieplan ─────────────────────────────────────────
-      if (actionPlan.length > 0) {
-        layout.addSectionTitle('Actieplan')
-        layout.addParagraph('Op basis van de analyse adviseren wij om met de volgende stappen te beginnen, in volgorde van prioriteit.')
-
-        for (const action of actionPlan) {
-          layout.addNumberedItem(action.priority, action.dimensionLabel, action.action)
         }
       }
 
@@ -266,7 +252,7 @@ export default function PDFDownload(props: PDFDownloadProps) {
     } finally {
       setGenerating(false)
     }
-  }, [scores, context, maturity, findings, analyses, productRecommendations, actionPlan])
+  }, [scores, context, maturity, findings, analyses, productRecommendations])
 
   return (
     <div className="text-center">

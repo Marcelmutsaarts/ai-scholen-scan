@@ -5,7 +5,6 @@ import {
   getKeyFindings,
   getDimensionAnalysis,
   getProductRecommendations,
-  getActionPlan,
   type Scores,
 } from '../utils/scoring'
 import RadarChart from './RadarChart'
@@ -15,7 +14,6 @@ import EUReadiness from './EUReadiness'
 import KeyFindings from './KeyFindings'
 import DimensionAnalysis from './DimensionAnalysis'
 import TrainingRecommendations from './TrainingRecommendations'
-import ActionPlan from './ActionPlan'
 import PDFDownload from './PDFDownload'
 
 interface ResultsPageProps {
@@ -30,7 +28,6 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
   const findings = useMemo(() => getKeyFindings(scores), [scores])
   const analyses = useMemo(() => getDimensionAnalysis(scores), [scores])
   const productRecs = useMemo(() => getProductRecommendations(scores, context), [scores, context])
-  const actionPlanItems = useMemo(() => getActionPlan(scores, context), [scores, context])
 
   return (
     <div className="animate-fade-in max-w-3xl mx-auto py-8 px-4">
@@ -72,8 +69,6 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
         {/* Scholingsadvies — productaanbevelingen */}
         <TrainingRecommendations recommendations={productRecs} />
 
-        {/* Actieplan — geprioriteerde stappen */}
-        <ActionPlan actions={actionPlanItems} />
       </div>
 
       {/* CTA en acties */}
@@ -85,7 +80,6 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
           findings={findings}
           analyses={analyses}
           productRecommendations={productRecs}
-          actionPlan={actionPlanItems}
         />
 
         <div className="bg-purple-50 rounded-xl p-6 text-center">
