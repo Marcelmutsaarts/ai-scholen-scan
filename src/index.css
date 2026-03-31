@@ -1,0 +1,54 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+@theme {
+  --color-purple-50: #f5edff;
+  --color-purple-100: #ebdfff;
+  --color-purple-200: #d9c2ff;
+  --color-purple-300: #c29dff;
+  --color-purple-400: #a15df5;
+  --color-purple-500: #9959ea;
+  --color-purple-600: #814bc6;
+  --color-purple-700: #7947ba;
+  --color-purple-800: #5F3792;
+  --color-purple-900: #3d2066;
+  --color-brand: #a15df5;
+  --color-brand-light: #ebdfff;
+  --color-brand-dark: #7947ba;
+  --color-brand-darker: #5F3792;
+  --color-body: #4a5568;
+  --font-sans: 'Poppins', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-body);
+  background-color: #f8fafc;
+  margin: 0;
+}
+
+.gradient-btn {
+  background: linear-gradient(to right, #A25DF8 0%, #5F3792 100%);
+}
+
+.gradient-btn:hover {
+  background: linear-gradient(to right, #9959ea 0%, #4d2d7a 100%);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out;
+}
