@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
-import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import type { Scores } from '../utils/scoring'
+import type { Scores, DimensionAnalysis, RecommendedProduct, ActionPlanItem } from '../utils/scoring'
 
 interface PDFDownloadProps {
   scores: Scores
@@ -12,111 +11,254 @@ interface PDFDownloadProps {
     weakest: { label: string; score: number; description: string }
     recommendation: string
   }
+  analyses: DimensionAnalysis[]
+  productRecommendations: RecommendedProduct[]
+  actionPlan: ActionPlanItem[]
 }
 
-export default function PDFDownload({ scores, context, maturity, findings }: PDFDownloadProps) {
+class PDFLayout {
+  pdf: jsPDF
+  y: number
+  marginLeft = 15
+  marginRight = 15
+  pageWidth = 210
+  pageHeight = 297
+  contentWidth: number
+  footerText: string
+
+  constructor(pdf: jsPDF, footerText: string) {
+    this.pdf = pdf
+    this.y = 30
+    this.contentWidth = this.pageWidth - this.marginLeft - this.marginRight
+    this.footerText = footerText
+  }
+
+  checkPageBreak(neededHeight: number) {
+    if (this.y + neededHeight > this.pageHeight - 20) {
+      this.addFooter()
+      this.pdf.addPage()
+      this.y = 15
+    }
+  }
+
+  addFooter() {
+    this.pdf.setFontSize(7)
+    this.pdf.setTextColor(121, 71, 186)
+    this.pdf.text(this.footerText, this.marginLeft, this.pageHeight - 8)
+    this.pdf.setTextColor(74, 85, 104)
+  }
+
+  addHeader(title: string) {
+    // Purple header bar
+    this.pdf.setFillColor(161, 93, 245)
+    this.pdf.rect(0, 0, this.pageWidth, 22, 'F')
+    this.pdf.setTextColor(255, 255, 255)
+    this.pdf.setFontSize(14)
+    this.pdf.setFont('helvetica', 'bold')
+    this.pdf.text(title, this.marginLeft, 10)
+    this.pdf.setFontSize(9)
+    this.pdf.setFont('helvetica', 'normal')
+    this.pdf.text('AI voor Docenten — aivoordocenten.nl', this.marginLeft, 17)
+    this.pdf.setTextColor(0, 0, 0)
+    this.y = 30
+  }
+
+  addSectionTitle(title: string) {
+    this.checkPageBreak(12)
+    this.pdf.setFontSize(12)
+    this.pdf.setFont('helvetica', 'bold')
+    this.pdf.setTextColor(95, 55, 146)
+    this.pdf.text(title, this.marginLeft, this.y)
+    this.y += 7
+    this.pdf.setTextColor(74, 85, 104)
+    this.pdf.setFont('helvetica', 'normal')
+  }
+
+  addSubTitle(title: string, score?: string) {
+    this.checkPageBreak(8)
+    this.pdf.setFontSize(9)
+    this.pdf.setFont('helvetica', 'bold')
+    this.pdf.setTextColor(0, 0, 0)
+    this.pdf.text(title, this.marginLeft, this.y)
+    if (score) {
+      this.pdf.setFont('helvetica', 'normal')
+      this.pdf.setTextColor(121, 71, 186)
+      const titleWidth = this.pdf.getTextWidth(title)
+      this.pdf.text(`  ${score}`, this.marginLeft + titleWidth, this.y)
+    }
+    this.y += 5
+    this.pdf.setTextColor(74, 85, 104)
+    this.pdf.setFont('helvetica', 'normal')
+  }
+
+  addParagraph(text: string, indent = 0) {
+    this.pdf.setFontSize(8)
+    this.pdf.setFont('helvetica', 'normal')
+    this.pdf.setTextColor(74, 85, 104)
+    const lines = this.pdf.splitTextToSize(text, this.contentWidth - indent)
+    for (const line of lines) {
+      this.checkPageBreak(4)
+      this.pdf.text(line, this.marginLeft + indent, this.y)
+      this.y += 3.5
+    }
+    this.y += 2
+  }
+
+  addScoreBar(label: string, score: number) {
+    this.checkPageBreak(8)
+    this.pdf.setFontSize(8)
+    this.pdf.setTextColor(74, 85, 104)
+    this.pdf.text(label, this.marginLeft, this.y)
+    this.pdf.text(`${score.toFixed(1)}/4.0`, this.marginLeft + this.contentWidth - 15, this.y)
+
+    // Bar background
+    const barX = this.marginLeft + 60
+    const barWidth = this.contentWidth - 80
+    this.y += 1.5
+    this.pdf.setFillColor(235, 223, 255)
+    this.pdf.roundedRect(barX, this.y - 2, barWidth, 3, 1.5, 1.5, 'F')
+
+    // Bar fill
+    this.pdf.setFillColor(161, 93, 245)
+    const fillWidth = (score / 4) * barWidth
+    if (fillWidth > 0) {
+      this.pdf.roundedRect(barX, this.y - 2, fillWidth, 3, 1.5, 1.5, 'F')
+    }
+
+    this.y += 4
+  }
+
+  addNumberedItem(number: number, label: string, text: string) {
+    this.checkPageBreak(10)
+    this.pdf.setFontSize(8)
+    this.pdf.setFont('helvetica', 'bold')
+    this.pdf.setTextColor(161, 93, 245)
+    this.pdf.text(`${number}.`, this.marginLeft, this.y)
+    this.pdf.setTextColor(121, 71, 186)
+    this.pdf.text(label, this.marginLeft + 5, this.y)
+    this.y += 3.5
+    this.pdf.setFont('helvetica', 'normal')
+    this.pdf.setTextColor(74, 85, 104)
+    const lines = this.pdf.splitTextToSize(text, this.contentWidth - 5)
+    for (const line of lines) {
+      this.checkPageBreak(4)
+      this.pdf.text(line, this.marginLeft + 5, this.y)
+      this.y += 3.5
+    }
+    this.y += 1.5
+  }
+}
+
+export default function PDFDownload(props: PDFDownloadProps) {
+  const { scores, context, maturity, findings, analyses, productRecommendations, actionPlan } = props
   const [generating, setGenerating] = useState(false)
 
   const generatePDF = useCallback(async () => {
     setGenerating(true)
     try {
-      const content = document.getElementById('results-content')
-      if (!content) return
-
-      const canvas = await html2canvas(content, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#f8fafc',
-        logging: false,
-      })
-
-      const imgWidth = 190
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
       const pdf = new jsPDF('p', 'mm', 'a4')
-
-      // Header with brand color
-      pdf.setFillColor(161, 93, 245)
-      pdf.rect(0, 0, 210, 25, 'F')
-      pdf.setTextColor(255, 255, 255)
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('AI Maturity Scan', 10, 12)
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text('AI voor Docenten', 10, 19)
-
-      // School name and date
-      pdf.setTextColor(0, 0, 0)
-      pdf.setFontSize(12)
       const schoolName = (context.schoolnaam as string) || 'School'
       const dateStr = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
-      pdf.text(`${schoolName} — ${dateStr}`, 10, 35)
+      const footer = 'AI voor Docenten — aivoordocenten.nl — info@aivoordocenten.nl'
+      const layout = new PDFLayout(pdf, footer)
 
-      // Maturity level
-      pdf.setFontSize(10)
-      pdf.setTextColor(121, 71, 186)
-      pdf.text(`Volwassenheidsniveau: ${maturity.label} (${scores.total.toFixed(1)}/4.0)`, 10, 43)
-      pdf.text(`EU AI Act Readiness: ${scores.euReadiness}%`, 10, 49)
+      // ── Pagina 1: Header & overzicht ──────────────────────
+      layout.addHeader('AI Maturity Scan — Analyserapport')
 
-      // Scores
-      pdf.setTextColor(74, 85, 104)
-      pdf.setFontSize(9)
-      const dims = [
-        ['Visie & Beleid', scores.visie],
-        ['Docentvaardigheden', scores.docent],
-        ['Onderwijs aan leerlingen', scores.onderwijs],
-        ['Infrastructuur', scores.infra],
-      ] as const
-      let y = 57
-      for (const [label, score] of dims) {
-        pdf.text(`${label}: ${score.toFixed(1)}/4.0`, 10, y)
-        y += 5
-      }
-
-      // Charts image
-      const imgData = canvas.toDataURL('image/png')
-      const chartStartY = y + 3
-      const availableHeight = 297 - chartStartY - 30
-      const finalHeight = Math.min(imgHeight, availableHeight)
-      const finalWidth = (finalHeight / imgHeight) * imgWidth
-
-      pdf.addImage(imgData, 'PNG', 10, chartStartY, finalWidth, finalHeight)
-
-      // If content overflows, add second page
-      if (imgHeight > availableHeight) {
-        pdf.addPage()
-        const remainingOffset = availableHeight
-        // Draw remaining content on page 2
-        pdf.addImage(imgData, 'PNG', 10, 10 - remainingOffset, imgWidth, imgHeight)
-
-        // Footer on page 2
-        pdf.setFontSize(8)
-        pdf.setTextColor(121, 71, 186)
-        pdf.text('AI voor Docenten — aivoordocenten.nl — info@aivoordocenten.nl', 10, 287)
-      }
-
-      // Findings text at bottom
-      const findingsY = Math.min(chartStartY + finalHeight + 8, 250)
-      pdf.setFontSize(9)
-      pdf.setTextColor(0, 0, 0)
+      // School info
+      pdf.setFontSize(11)
       pdf.setFont('helvetica', 'bold')
-      pdf.text('Kernbevindingen', 10, findingsY)
+      pdf.setTextColor(0, 0, 0)
+      pdf.text(schoolName, layout.marginLeft, layout.y)
+      layout.y += 5
+      pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(74, 85, 104)
+      const onderwijstype = context.onderwijstype as string || ''
+      const invuller = context.invullerNaam as string || ''
+      pdf.text(`${onderwijstype ? onderwijstype + ' | ' : ''}${dateStr}${invuller ? ' | ' + invuller : ''}`, layout.marginLeft, layout.y)
+      layout.y += 8
 
-      const splitText = (text: string, maxWidth: number) => pdf.splitTextToSize(text, maxWidth)
+      // Maturity level
+      pdf.setFillColor(245, 237, 255)
+      pdf.roundedRect(layout.marginLeft, layout.y - 2, layout.contentWidth, 16, 3, 3, 'F')
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(95, 55, 146)
+      pdf.text(`Volwassenheidsniveau: ${maturity.label}`, layout.marginLeft + 4, layout.y + 4)
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`${scores.total.toFixed(1)}/4.0 — EU AI Act Readiness: ${scores.euReadiness}%`, layout.marginLeft + 4, layout.y + 10)
+      layout.y += 20
 
-      let fY = findingsY + 6
-      pdf.text(splitText(`Sterkste: ${findings.strongest.label} (${findings.strongest.score.toFixed(1)}) — ${findings.strongest.description}`, 180), 10, fY)
-      fY += 10
-      pdf.text(splitText(`Groeikans: ${findings.weakest.label} (${findings.weakest.score.toFixed(1)}) — ${findings.weakest.description}`, 180), 10, fY)
-      fY += 10
-      pdf.text(splitText(`Eerste stap: ${findings.recommendation}`, 180), 10, fY)
+      // Score bars
+      layout.addSectionTitle('Scores per dimensie')
+      layout.addScoreBar('Visie & Beleid', scores.visie)
+      layout.addScoreBar('Docentvaardigheden', scores.docent)
+      layout.addScoreBar('Onderwijs aan leerlingen', scores.onderwijs)
+      layout.addScoreBar('Infrastructuur', scores.infra)
+      layout.y += 2
 
-      // Footer
+      // Subdimension scores
+      layout.addSubTitle('Docentvaardigheden — subdimensies')
+      layout.addScoreBar('  Mindset', scores.subdimensions.mindset)
+      layout.addScoreBar('  Ethiek', scores.subdimensions.ethiek)
+      layout.addScoreBar('  Kennis', scores.subdimensions.kennis)
+      layout.addScoreBar('  Pedagogiek', scores.subdimensions.pedagogiek)
+      layout.addScoreBar('  Agency', scores.subdimensions.agency)
+      layout.y += 3
+
+      // Key findings summary
+      layout.addSectionTitle('Kernbevindingen')
+      layout.addParagraph(`Sterkste dimensie: ${findings.strongest.label} (${findings.strongest.score.toFixed(1)}) — ${findings.strongest.description}`)
+      layout.addParagraph(`Grootste groeikans: ${findings.weakest.label} (${findings.weakest.score.toFixed(1)}) — ${findings.weakest.description}`)
+      layout.y += 2
+
+      // ── Dimensie-analyse ──────────────────────────────────
+      layout.addSectionTitle('Analyse per dimensie')
+
+      for (const analysis of analyses) {
+        const prefix = analysis.isSubdimension ? '  ' : ''
+        const scoreStr = `(${analysis.score.toFixed(1)} — ${analysis.tierLabel})`
+        layout.addSubTitle(`${prefix}${analysis.label}`, scoreStr)
+        layout.addParagraph(analysis.narrative, analysis.isSubdimension ? 3 : 0)
+      }
+
+      // ── Scholingsadvies ───────────────────────────────────
+      if (productRecommendations.length > 0) {
+        layout.addSectionTitle('Scholingsadvies')
+        layout.addParagraph('Op basis van jullie scores adviseren wij de volgende stappen om de AI-geletterdheid op jullie school te versterken.')
+
+        for (const rec of productRecommendations) {
+          layout.addSubTitle(rec.name, `(${rec.format})`)
+          layout.addParagraph(rec.reason)
+        }
+      }
+
+      // ── Actieplan ─────────────────────────────────────────
+      if (actionPlan.length > 0) {
+        layout.addSectionTitle('Actieplan')
+        layout.addParagraph('Op basis van de analyse adviseren wij om met de volgende stappen te beginnen, in volgorde van prioriteit.')
+
+        for (const action of actionPlan) {
+          layout.addNumberedItem(action.priority, action.dimensionLabel, action.action)
+        }
+      }
+
+      // ── Afsluiting ────────────────────────────────────────
+      layout.y += 3
+      layout.checkPageBreak(20)
+      pdf.setFillColor(245, 237, 255)
+      pdf.roundedRect(layout.marginLeft, layout.y, layout.contentWidth, 14, 3, 3, 'F')
       pdf.setFontSize(8)
-      pdf.setTextColor(121, 71, 186)
-      pdf.text('AI voor Docenten — aivoordocenten.nl — info@aivoordocenten.nl', 10, 287)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(95, 55, 146)
+      pdf.text('Wil je dit rapport bespreken of advies over de vervolgstappen?', layout.marginLeft + 4, layout.y + 5)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Neem contact op: info@aivoordocenten.nl — aivoordocenten.nl', layout.marginLeft + 4, layout.y + 10)
+
+      // Footer on last page
+      layout.addFooter()
 
       pdf.save(`AI-Maturity-Scan-${schoolName.replace(/\s+/g, '-')}.pdf`)
     } catch (err) {
@@ -124,7 +266,7 @@ export default function PDFDownload({ scores, context, maturity, findings }: PDF
     } finally {
       setGenerating(false)
     }
-  }, [scores, context, maturity, findings])
+  }, [scores, context, maturity, findings, analyses, productRecommendations, actionPlan])
 
   return (
     <div className="text-center">

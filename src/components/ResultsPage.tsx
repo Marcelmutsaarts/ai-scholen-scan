@@ -1,10 +1,21 @@
 import { useMemo } from 'react'
-import { calculateScores, getMaturityLevel, getKeyFindings, type Scores } from '../utils/scoring'
+import {
+  calculateScores,
+  getMaturityLevel,
+  getKeyFindings,
+  getDimensionAnalysis,
+  getProductRecommendations,
+  getActionPlan,
+  type Scores,
+} from '../utils/scoring'
 import RadarChart from './RadarChart'
 import SubRadarChart from './SubRadarChart'
 import MaturityLevel from './MaturityLevel'
 import EUReadiness from './EUReadiness'
 import KeyFindings from './KeyFindings'
+import DimensionAnalysis from './DimensionAnalysis'
+import TrainingRecommendations from './TrainingRecommendations'
+import ActionPlan from './ActionPlan'
 import PDFDownload from './PDFDownload'
 
 interface ResultsPageProps {
@@ -17,11 +28,14 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
   const scores = useMemo(() => calculateScores(answers), [answers])
   const maturity = useMemo(() => getMaturityLevel(scores.total), [scores])
   const findings = useMemo(() => getKeyFindings(scores), [scores])
+  const analyses = useMemo(() => getDimensionAnalysis(scores), [scores])
+  const productRecs = useMemo(() => getProductRecommendations(scores, context), [scores, context])
+  const actionPlanItems = useMemo(() => getActionPlan(scores, context), [scores, context])
 
   return (
     <div className="animate-fade-in max-w-3xl mx-auto py-8 px-4">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2 text-black">Resultaten</h1>
+        <h1 className="text-3xl font-bold mb-2 text-black">Analyserapport</h1>
         <p className="text-lg text-body">
           {(context.schoolnaam as string) || 'Jullie school'} — {new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
@@ -37,11 +51,11 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
         {/* Radar Charts */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-center mb-4">Overzicht dimensies</h3>
+            <h3 className="font-semibold text-center mb-4 text-black">Overzicht dimensies</h3>
             <RadarChart scores={scores} />
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-center mb-4">Docentvaardigheden</h3>
+            <h3 className="font-semibold text-center mb-4 text-black">Docentvaardigheden</h3>
             <SubRadarChart subdimensions={scores.subdimensions} />
           </div>
         </div>
@@ -49,23 +63,43 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
         {/* Score Details */}
         <ScoreDetails scores={scores} />
 
-        {/* Key Findings */}
+        {/* Dimension Analysis — narratieve rapportage */}
+        <DimensionAnalysis analyses={analyses} />
+
+        {/* Key Findings — samenvatting */}
         <KeyFindings findings={findings} />
+
+        {/* Scholingsadvies — productaanbevelingen */}
+        <TrainingRecommendations recommendations={productRecs} />
+
+        {/* Actieplan — geprioriteerde stappen */}
+        <ActionPlan actions={actionPlanItems} />
       </div>
 
-      {/* CTA */}
+      {/* CTA en acties */}
       <div className="mt-8 space-y-4">
-        <PDFDownload scores={scores} context={context} maturity={maturity} findings={findings} />
+        <PDFDownload
+          scores={scores}
+          context={context}
+          maturity={maturity}
+          findings={findings}
+          analyses={analyses}
+          productRecommendations={productRecs}
+          actionPlan={actionPlanItems}
+        />
 
         <div className="bg-purple-50 rounded-xl p-6 text-center">
+          <p className="text-sm text-body mb-1">
+            Wil je dit rapport bespreken of advies over de vervolgstappen?
+          </p>
           <p className="text-sm text-body mb-3">
-            Wil je deze resultaten bespreken of advies over vervolgstappen?
+            We denken graag met jullie mee.
           </p>
           <a
             href="mailto:info@aivoordocenten.nl"
             className="text-purple-400 font-medium hover:text-purple-700 transition text-sm"
           >
-            Neem contact op met AI voor Docenten: info@aivoordocenten.nl
+            Neem contact op: info@aivoordocenten.nl
           </a>
         </div>
 
@@ -92,7 +126,7 @@ function ScoreDetails({ scores }: { scores: Scores }) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm mb-8">
-      <h3 className="font-semibold mb-4">Scores per dimensie</h3>
+      <h3 className="font-semibold mb-4 text-black">Scores per dimensie</h3>
       <div className="space-y-3">
         {dims.map(d => (
           <div key={d.label}>
