@@ -173,12 +173,12 @@ export const productRules: ProductRule[] = [
     condition: (s) => s.subdimensions.kennis <= 2.5 || s.subdimensions.mindset <= 2.0,
     reason: (s) => {
       if (s.subdimensions.kennis <= 2.0 && s.subdimensions.mindset <= 2.0) {
-        return 'Jullie team mist zowel de basiskennis over AI als de mindset om ermee aan de slag te gaan. De Webinarserie Basis biedt een laagdrempelige en praktische kennismaking die beide aspecten adresseert.'
+        return 'Jullie team mist zowel de basiskennis over AI als de open houding om ermee aan de slag te gaan. Een gerichte scholing in de basisprincipes — hoe generatieve AI werkt, hoe je output kritisch beoordeelt, en wat de beperkingen zijn — zou een logische eerste stap zijn.'
       }
       if (s.subdimensions.kennis <= 2.5) {
-        return `De kennisscore van jullie team (${s.subdimensions.kennis.toFixed(1)}) laat zien dat de basisprincipes van AI nog niet breed worden begrepen. De Webinarserie Basis helpt docenten om AI te begrijpen, output te beoordelen, en het verantwoord in te zetten.`
+        return `De basisprincipes van AI worden nog niet breed begrepen in jullie team (kennis: ${s.subdimensions.kennis.toFixed(1)}). Een gerichte scholing die docenten leert hoe AI werkt, hoe je output beoordeelt, en hoe je het verantwoord inzet maakt hier het verschil.`
       }
-      return `Met een mindset-score van ${s.subdimensions.mindset.toFixed(1)} is er nog terughoudendheid in het team. De Webinarserie Basis biedt een veilige en laagdrempelige eerste kennismaking met AI.`
+      return `Er is nog terughoudendheid in het team (mindset: ${s.subdimensions.mindset.toFixed(1)}). Een laagdrempelige kennismaking met AI — praktisch, in kleine stappen, gericht op het eigen vak — helpt om die drempel te verlagen.`
     },
   },
   {
@@ -190,7 +190,7 @@ export const productRules: ProductRule[] = [
       const someSubsHigher = Object.values(s.subdimensions).some(v => v >= 2.5)
       return hasEnthusiasts && hasRoom && someSubsHigher
     },
-    reason: (s) => `Er zijn docenten in jullie team die al enthousiast zijn (mindset: ${s.subdimensions.mindset.toFixed(1)}) en de basis beheersen. De Webinarserie Gevorderd helpt hen om door te groeien naar een kartrekkers- of coachrol, zodat zij het team kunnen meenemen.`,
+    reason: (s) => `Er zijn enthousiastelingen in jullie team die de basis beheersen (mindset: ${s.subdimensions.mindset.toFixed(1)}). Geef hen de ruimte om door te groeien naar een kartrekkers- of coachrol — met verdieping in prompt engineering, AI-didactiek en het begeleiden van collega's.`,
   },
   {
     productId: 'workshop',
@@ -198,19 +198,19 @@ export const productRules: ProductRule[] = [
     condition: (s) => s.subdimensions.pedagogiek <= 2.5 || s.subdimensions.agency <= 2.5,
     reason: (s) => {
       if (s.subdimensions.pedagogiek <= 2.5 && s.subdimensions.agency <= 2.5) {
-        return `Zowel de didactische inzet van AI (${s.subdimensions.pedagogiek.toFixed(1)}) als de kennisdeling in het team (${s.subdimensions.agency.toFixed(1)}) vragen om aandacht. Een in-company workshop brengt het hele team samen om hands-on aan de slag te gaan.`
+        return `Zowel de didactische inzet van AI (${s.subdimensions.pedagogiek.toFixed(1)}) als de kennisdeling in het team (${s.subdimensions.agency.toFixed(1)}) vragen om aandacht. Het hele team samen laten werken aan AI — hands-on, met concrete opdrachten uit de eigen praktijk — helpt om van losse initiatieven naar een gedeelde aanpak te komen.`
       }
       if (s.subdimensions.pedagogiek <= 2.5) {
-        return `AI wordt nog weinig bewust ingezet in de didactiek (score: ${s.subdimensions.pedagogiek.toFixed(1)}). Een in-company workshop helpt docenten om samen opdrachten te herontwerpen en AI als leermiddel te verkennen.`
+        return `AI wordt nog weinig bewust ingezet in de didactiek (score: ${s.subdimensions.pedagogiek.toFixed(1)}). Docenten samen opdrachten laten herontwerpen en AI als leermiddel laten verkennen — praktisch, op locatie — is een effectieve manier om hier beweging in te krijgen.`
       }
-      return `Kennisdeling en eigenaarschap in het team scoren laag (agency: ${s.subdimensions.agency.toFixed(1)}). Een workshop op locatie helpt om samen afspraken te maken en een gedeelde aanpak te ontwikkelen.`
+      return `Kennisdeling en eigenaarschap in het team scoren laag (agency: ${s.subdimensions.agency.toFixed(1)}). Als team samen aan de slag gaan — met concrete afspraken en een gedeelde aanpak — werkt beter dan individuele initiatieven.`
     },
   },
   {
     productId: 'keynote',
     priority: 4,
     condition: (s) => s.subdimensions.mindset <= 2.0,
-    reason: () => 'Het team is nog overwegend terughoudend tegenover AI. Een inspirerende keynote kan het bewustzijn vergroten en de eerste vonk aanwakkeren. Ideaal als aftrap van een studiedag of verandertraject.',
+    reason: () => 'Het team staat nog overwegend terughoudend tegenover AI. Een inspirerende sessie die laat zien wat AI concreet kan betekenen voor hun dagelijks werk kan de eerste vonk zijn. Ideaal als aftrap van een studiedag of als startpunt voor een breder traject.',
   },
   {
     productId: 'begeleiding',
@@ -222,9 +222,9 @@ export const productRules: ProductRule[] = [
     reason: (s) => {
       const lowDims = [s.visie, s.docent, s.onderwijs, s.infra].filter(v => v <= 2.5).length
       if (lowDims >= 3) {
-        return `Met ${lowDims} van de 4 dimensies onder de 2.5 is een losse workshop of webinar niet genoeg. Een begeleidingstraject helpt jullie school om stap voor stap een solide basis op te bouwen — van visie tot implementatie.`
+        return `Met ${lowDims} van de 4 dimensies onder de 2.5 is een losse interventie niet genoeg. Jullie school is gebaat bij een traject over meerdere maanden — van visievorming tot implementatie — om stap voor stap een solide basis op te bouwen.`
       }
-      return `Jullie school scoort gemiddeld ${s.total.toFixed(1)} en zit in de fase van verkenning of opbouw. Een begeleidingstraject helpt om de stap te zetten naar structurele integratie van AI in jullie onderwijs en organisatie.`
+      return `Jullie school zit in de fase van verkenning of opbouw (${s.total.toFixed(1)}/4.0). Om de stap te zetten naar structurele integratie van AI is een langere aanpak effectiever dan losse acties.`
     },
   },
   {
@@ -234,7 +234,7 @@ export const productRules: ProductRule[] = [
       const isVO = ctx.onderwijstype === 'VO'
       return isVO && s.onderwijs <= 2.5
     },
-    reason: (s) => `De score op onderwijs aan leerlingen (${s.onderwijs.toFixed(1)}) laat zien dat AI-geletterdheid nog geen vast onderdeel is van jullie curriculum. Ons programma voor AI-vaardigheid bij leerlingen biedt een kant-en-klare leerlijn die aansluit bij het VO.`,
+    reason: (s) => `AI-geletterdheid is nog geen vast onderdeel van jullie curriculum (onderwijs: ${s.onderwijs.toFixed(1)}). Een gestructureerd programma waarin leerlingen leren om AI verantwoord en effectief in te zetten zou een waardevolle toevoeging zijn.`,
   },
 ]
 

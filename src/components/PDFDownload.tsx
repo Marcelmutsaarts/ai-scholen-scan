@@ -228,6 +228,13 @@ export default function PDFDownload(props: PDFDownloadProps) {
         layout.addSectionTitle('Hoe verder?')
         for (const rec of productRecommendations) {
           layout.addParagraph(rec.reason)
+          // Subtiel productlabel
+          pdf.setFontSize(7)
+          pdf.setTextColor(180, 180, 180)
+          layout.checkPageBreak(4)
+          pdf.text(`AI voor Docenten — ${rec.name}`, layout.marginLeft, layout.y)
+          layout.y += 4
+          pdf.setTextColor(74, 85, 104)
         }
       }
 
