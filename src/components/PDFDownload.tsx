@@ -16,6 +16,14 @@ interface PDFDownloadProps {
   productRecommendations: RecommendedProduct[]
 }
 
+const tierBadgeColors: Record<string, [number, number, number]> = {
+  startend: [239, 68, 68],
+  verkennend: [217, 119, 6],
+  opbouwend: [202, 138, 4],
+  integrerend: [22, 163, 74],
+  voorlopend: [16, 185, 129],
+}
+
 class PDFLayout {
   pdf: jsPDF
   y: number
@@ -121,8 +129,8 @@ class PDFLayout {
     this.pdf.text(label, this.marginLeft, this.y)
     this.pdf.text(`${score.toFixed(1)}/4.0`, this.marginLeft + this.contentWidth - 15, this.y)
 
-    const barX = this.marginLeft + 75
-    const barWidth = this.contentWidth - 95
+    const barX = this.marginLeft + 90
+    const barWidth = this.contentWidth - 110
     this.y += 1.5
     this.pdf.setFillColor(235, 223, 255)
     this.pdf.roundedRect(barX, this.y - 2, barWidth, 3, 1.5, 1.5, 'F')
@@ -134,6 +142,87 @@ class PDFLayout {
     }
 
     this.y += 4
+  }
+
+  addAnalysisCard(label: string, score: number, tier: string, tierLabel: string, narrative: string, compact = false) {
+    const indent = compact ? 5 : 0
+    const fontSize = compact ? 8 : 9
+    const pad = compact ? 3 : 4
+    const textLines = this.pdf.splitTextToSize(narrative, this.contentWidth - indent - 2 * pad)
+    const height = pad * 2 + 6 + textLines.length * 3.5
+    this.checkPageBreak(height + 2)
+
+    // background tint by tier
+    const bg: Record<string, [number, number, number]> = {
+      startend: [254, 242, 242],
+      verkennend: [255, 251, 235],
+      opbouwend: [254, 252, 232],
+      integrerend: [240, 253, 244],
+      voorlopend: [236, 253, 245],
+    }
+    const [r, g, b] = bg[tier] || [249, 250, 251]
+    this.pdf.setFillColor(r, g, b)
+    this.pdf.roundedRect(this.marginLeft + indent, this.y, this.contentWidth - indent, height, 2, 2, 'F')
+
+    // left accent
+    const [br, bg2, bb] = tierBadgeColors[tier] || [161, 93, 245]
+    this.pdf.setFillColor(br, bg2, bb)
+    this.pdf.rect(this.marginLeft + indent, this.y, 1.2, height, 'F')
+
+    // label + tier + score on one row
+    this.pdf.setFontSize(fontSize)
+    this.pdf.setFont('helvetica', 'bold')
+    this.pdf.setTextColor(0, 0, 0)
+    this.pdf.text(label, this.marginLeft + indent + pad, this.y + pad + 2)
+
+    const rightText = `${tierLabel} · ${score.toFixed(1)}/4.0`
+    this.pdf.setFont('helvetica', 'normal')
+    this.pdf.setTextColor(br, bg2, bb)
+    const rightW = this.pdf.getTextWidth(rightText)
+    this.pdf.text(rightText, this.marginLeft + this.contentWidth - rightW - pad, this.y + pad + 2)
+
+    // narrative text
+    this.pdf.setFont('helvetica', 'normal')
+    this.pdf.setFontSize(compact ? 7.5 : 8)
+    this.pdf.setTextColor(74, 85, 104)
+    let ty = this.y + pad + 7
+    for (const line of textLines) {
+      this.pdf.text(line, this.marginLeft + indent + pad, ty)
+      ty += 3.5
+    }
+
+    this.y += height + 2
+  }
+
+  addKeyFindingBlock(color: [number, number, number], title: string, body: string) {
+    const pad = 4
+    const titleFontSize = 9
+    const bodyFontSize = 8
+    this.pdf.setFontSize(bodyFontSize)
+    const bodyLines = this.pdf.splitTextToSize(body, this.contentWidth - 2 * pad)
+    const height = pad * 2 + 5 + bodyLines.length * 3.5
+    this.checkPageBreak(height + 2)
+
+    const [r, g, b] = color
+    // light bg
+    this.pdf.setFillColor(Math.min(255, r + 200), Math.min(255, g + 200), Math.min(255, b + 200))
+    this.pdf.roundedRect(this.marginLeft, this.y, this.contentWidth, height, 2, 2, 'F')
+
+    this.pdf.setFontSize(titleFontSize)
+    this.pdf.setFont('helvetica', 'bold')
+    this.pdf.setTextColor(r, g, b)
+    this.pdf.text(title, this.marginLeft + pad, this.y + pad + 2)
+
+    this.pdf.setFont('helvetica', 'normal')
+    this.pdf.setFontSize(bodyFontSize)
+    this.pdf.setTextColor(74, 85, 104)
+    let ty = this.y + pad + 6
+    for (const line of bodyLines) {
+      this.pdf.text(line, this.marginLeft + pad, ty)
+      ty += 3.5
+    }
+
+    this.y += height + 3
   }
 }
 
@@ -151,7 +240,7 @@ export default function PDFDownload(props: PDFDownloadProps) {
       const layout = new PDFLayout(pdf, footer)
       const onderwijstype = context.onderwijstype as string | undefined
 
-      // ── Pagina 1: Header & overzicht ──────────────────────
+      // ── Header ─────────────────────────────────────────────
       layout.addHeader('AI Maturity Scan — Analyserapport')
 
       // School info
@@ -167,27 +256,81 @@ export default function PDFDownload(props: PDFDownloadProps) {
       pdf.text(`${onderwijstype ? onderwijstype + ' | ' : ''}${dateStr}${invuller ? ' | ' + invuller : ''}`, layout.marginLeft, layout.y)
       layout.y += 8
 
-      // Maturity level
+      // ── Volwassenheidsniveau ──────────────────────────────
       pdf.setFillColor(245, 237, 255)
-      pdf.roundedRect(layout.marginLeft, layout.y - 2, layout.contentWidth, 16, 3, 3, 'F')
-      pdf.setFontSize(10)
+      const maturityHeight = 24
+      pdf.roundedRect(layout.marginLeft, layout.y, layout.contentWidth, maturityHeight, 3, 3, 'F')
+      pdf.setFontSize(7)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(161, 93, 245)
+      pdf.text('VOLWASSENHEIDSNIVEAU', layout.marginLeft + 4, layout.y + 5)
+      pdf.setFontSize(13)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(95, 55, 146)
-      pdf.text(`Volwassenheidsniveau: ${maturity.label}`, layout.marginLeft + 4, layout.y + 4)
+      pdf.text(maturity.label, layout.marginLeft + 4, layout.y + 11)
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`${scores.total.toFixed(1)}/4.0 — EU AI Act Readiness: ${scores.euReadiness}%`, layout.marginLeft + 4, layout.y + 10)
-      layout.y += 20
+      pdf.setTextColor(121, 71, 186)
+      const scoreText = `${scores.total.toFixed(1)} / 4.0`
+      pdf.text(scoreText, layout.marginLeft + 4, layout.y + 16)
 
-      // Score bars - hoofddimensies
+      pdf.setFontSize(8)
+      pdf.setTextColor(74, 85, 104)
+      const matDescLines = pdf.splitTextToSize(maturity.description, layout.contentWidth - 8)
+      let mdY = layout.y + 21
+      for (const line of matDescLines.slice(0, 1)) {
+        pdf.text(line, layout.marginLeft + 4, mdY)
+        mdY += 3.5
+      }
+      // If description is longer, continue below the box
+      layout.y += maturityHeight + 2
+      if (matDescLines.length > 1) {
+        pdf.setTextColor(74, 85, 104)
+        for (const line of matDescLines.slice(1)) {
+          layout.checkPageBreak(4)
+          pdf.text(line, layout.marginLeft + 4, layout.y)
+          layout.y += 3.5
+        }
+        layout.y += 2
+      }
+
+      // ── EU AI Act Readiness ───────────────────────────────
+      layout.checkPageBreak(22)
+      pdf.setDrawColor(229, 231, 235)
+      pdf.setFillColor(255, 255, 255)
+      pdf.roundedRect(layout.marginLeft, layout.y, layout.contentWidth, 22, 3, 3, 'FD')
+
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(0, 0, 0)
+      pdf.text('EU AI Act Readiness', layout.marginLeft + 4, layout.y + 6)
+      pdf.setFontSize(14)
+      pdf.setTextColor(95, 55, 146)
+      const pctText = `${scores.euReadiness}%`
+      const pctWidth = pdf.getTextWidth(pctText)
+      pdf.text(pctText, layout.marginLeft + layout.contentWidth - pctWidth - 4, layout.y + 8)
+
+      pdf.setFontSize(7.5)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(74, 85, 104)
+      const euText = `De EU AI Act (Artikel 4) verplicht sinds februari 2025 dat organisaties zorgen voor AI-geletterdheid bij medewerkers. Op basis van jullie scores schatten wij de huidige readiness op ${scores.euReadiness}%.`
+      const euLines = pdf.splitTextToSize(euText, layout.contentWidth - 8)
+      let euY = layout.y + 11
+      for (const line of euLines) {
+        pdf.text(line, layout.marginLeft + 4, euY)
+        euY += 3.5
+      }
+      layout.y += 22 + 4
+
+      // ── Scores per dimensie ───────────────────────────────
       layout.addSectionTitle('Scores per dimensie')
       layout.addScoreBar(getDimensionLabel('visie', onderwijstype), scores.visie)
       layout.addScoreBar(getDimensionLabel('docent', onderwijstype), scores.docent)
       layout.addScoreBar(getDimensionLabel('onderwijs', onderwijstype), scores.onderwijs)
       layout.addScoreBar(getDimensionLabel('infra', onderwijstype), scores.infra)
-      layout.y += 2
+      layout.y += 3
 
-      // Docent subdimensies (Raamwerk A-E)
+      // Docent subdimensies
       layout.addSubTitle('AI-geletterdheid docenten — vijf domeinen')
       layout.addScoreBar('  A: Mensgerichte AI-mindset', scores.subdimensions.mindset)
       layout.addScoreBar('  B: Ethiek en verantwoord gebruik', scores.subdimensions.ethiek)
@@ -197,50 +340,101 @@ export default function PDFDownload(props: PDFDownloadProps) {
       layout.addCaption('Raamwerk AI-geletterdheid voor docenten (aivoordocenten.nl)')
       layout.y += 2
 
-      // Onderwijs subdimensies (KIES)
+      // KIES subdimensies
       layout.addSubTitle(`${getDimensionLabel('onderwijs', onderwijstype)} — KIES`)
       layout.addScoreBar('  K: Kiezen', scores.kiesSubdimensions.kiezen)
       layout.addScoreBar('  I: Instrueren', scores.kiesSubdimensions.instrueren)
       layout.addScoreBar('  E: Evalueren', scores.kiesSubdimensions.evalueren)
       layout.addScoreBar('  S: Spelregels', scores.kiesSubdimensions.spelregels)
       layout.addCaption('Raamwerk KIES (aivoordocenten.nl)')
-      layout.y += 3
+      layout.y += 4
 
-      // Key findings summary
-      layout.addSectionTitle('Kernbevindingen')
-      layout.addParagraph(`Sterkste dimensie: ${findings.strongest.label} (${findings.strongest.score.toFixed(1)}) — ${findings.strongest.description}`)
-      layout.addParagraph(`Grootste groeikans: ${findings.weakest.label} (${findings.weakest.score.toFixed(1)}) — ${findings.weakest.description}`)
-      layout.y += 2
-
-      // ── Dimensie-analyse ──────────────────────────────────
+      // ── Analyse per dimensie ──────────────────────────────
       layout.addSectionTitle('Analyse per dimensie')
 
-      for (const analysis of analyses) {
-        const prefix = analysis.isSubdimension ? '  ' : ''
-        const scoreStr = `(${analysis.score.toFixed(1)} — ${analysis.tierLabel})`
-        layout.addSubTitle(`${prefix}${analysis.label}`, scoreStr)
-        layout.addParagraph(analysis.narrative, analysis.isSubdimension ? 3 : 0)
+      const mainAnalyses = analyses.filter(a => !a.isSubdimension)
+      const footnoteByDim: Record<string, string> = {
+        docent: 'Onderverdeling op basis van het Raamwerk AI-geletterdheid voor docenten (aivoordocenten.nl).',
+        onderwijs: 'Onderverdeling op basis van het raamwerk KIES (aivoordocenten.nl).',
+      }
+      for (const dim of mainAnalyses) {
+        layout.addAnalysisCard(dim.label, dim.score, dim.tier, dim.tierLabel, dim.narrative)
+        const subs = analyses.filter(a => a.isSubdimension && a.parentDimension === dim.key)
+        for (const sub of subs) {
+          layout.addAnalysisCard(sub.label, sub.score, sub.tier, sub.tierLabel, sub.narrative, true)
+        }
+        const footnote = footnoteByDim[dim.key]
+        if (footnote) {
+          layout.addCaption(footnote, 5)
+        }
       }
 
-      // ── Hoe verder ───────────────────────────────────────
+      // ── Kernbevindingen ───────────────────────────────────
+      layout.y += 2
+      layout.addSectionTitle('Kernbevindingen')
+      layout.addKeyFindingBlock(
+        [22, 101, 52],
+        `Sterkste dimensie: ${findings.strongest.label} (${findings.strongest.score.toFixed(1)})`,
+        findings.strongest.description,
+      )
+      layout.addKeyFindingBlock(
+        [146, 64, 14],
+        `Grootste groeikans: ${findings.weakest.label} (${findings.weakest.score.toFixed(1)})`,
+        findings.weakest.description,
+      )
+      layout.addKeyFindingBlock(
+        [95, 55, 146],
+        'Aanbevolen eerste stap',
+        findings.recommendation,
+      )
+
+      // ── Hoe verder? ───────────────────────────────────────
       if (productRecommendations.length > 0) {
+        layout.y += 2
         layout.addSectionTitle('Hoe verder?')
+        layout.addParagraph('Op basis van jullie profiel zien wij de volgende mogelijkheden om de AI-geletterdheid te versterken.')
+
         for (const rec of productRecommendations) {
-          layout.addParagraph(rec.reason)
+          const firstDot = rec.reason.indexOf('. ')
+          const diagnose = firstDot > 0 ? rec.reason.substring(0, firstDot + 1) : rec.reason
+          const recept = firstDot > 0 ? rec.reason.substring(firstDot + 2) : ''
+
+          // Bold diagnose + normal recept in one paragraph
+          pdf.setFontSize(8)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(55, 65, 81)
+          const diagLines = pdf.splitTextToSize(diagnose, layout.contentWidth)
+          for (const line of diagLines) {
+            layout.checkPageBreak(4)
+            pdf.text(line, layout.marginLeft, layout.y)
+            layout.y += 3.5
+          }
+
+          if (recept) {
+            pdf.setFont('helvetica', 'normal')
+            pdf.setTextColor(74, 85, 104)
+            const recLines = pdf.splitTextToSize(recept, layout.contentWidth)
+            for (const line of recLines) {
+              layout.checkPageBreak(4)
+              pdf.text(line, layout.marginLeft, layout.y)
+              layout.y += 3.5
+            }
+          }
+
           pdf.setFontSize(7)
-          pdf.setTextColor(180, 180, 180)
+          pdf.setTextColor(156, 163, 175)
           layout.checkPageBreak(4)
           pdf.text(`AI voor Docenten — ${rec.name}`, layout.marginLeft, layout.y)
-          layout.y += 4
+          layout.y += 6
           pdf.setTextColor(74, 85, 104)
         }
       }
 
       // ── Afsluiting ────────────────────────────────────────
       layout.y += 3
-      layout.checkPageBreak(28)
+      layout.checkPageBreak(30)
       pdf.setFillColor(245, 237, 255)
-      pdf.roundedRect(layout.marginLeft, layout.y, layout.contentWidth, 22, 3, 3, 'F')
+      pdf.roundedRect(layout.marginLeft, layout.y, layout.contentWidth, 26, 3, 3, 'F')
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(95, 55, 146)
@@ -248,7 +442,7 @@ export default function PDFDownload(props: PDFDownloadProps) {
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(74, 85, 104)
-      const ctaText = 'Stuur dit rapport naar info@aivoordocenten.nl en we plannen vrijblijvend een half uur in om samen naar de uitkomsten te kijken.'
+      const ctaText = 'Stuur dit rapport naar info@aivoordocenten.nl en we plannen vrijblijvend een half uur in om samen naar de uitkomsten te kijken. Geen verplichtingen, geen verkooppraatje — we denken mee en waar het past vertellen we wat we kunnen betekenen.'
       const ctaLines = pdf.splitTextToSize(ctaText, layout.contentWidth - 8)
       let ctaY = layout.y + 11
       for (const line of ctaLines) {

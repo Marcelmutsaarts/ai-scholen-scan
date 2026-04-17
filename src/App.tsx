@@ -1,12 +1,11 @@
 import { useState, useCallback } from 'react'
 import Header from './components/Header'
-import WelcomePage from './components/WelcomePage'
 import ContextForm from './components/ContextForm'
 import ScanQuestions from './components/ScanQuestions'
 import ResultsPage from './components/ResultsPage'
 import { useLocalStorage } from './hooks/useLocalStorage'
 
-type AppState = 'welcome' | 'context' | 'visie' | 'docent' | 'onderwijs' | 'infra' | 'results'
+type AppState = 'context' | 'visie' | 'docent' | 'onderwijs' | 'infra' | 'results'
 
 const scanSections: AppState[] = ['context', 'visie', 'docent', 'onderwijs', 'infra']
 
@@ -15,7 +14,7 @@ export default function App() {
   const [answers, setAnswers] = useLocalStorage<Record<number, number>>('scan-answers', {})
   const [hasCompleted, setCompleted] = useLocalStorage<boolean>('scan-completed', false)
 
-  const [state, setState] = useState<AppState>(hasCompleted ? 'results' : 'welcome')
+  const [state, setState] = useState<AppState>(hasCompleted ? 'results' : 'context')
 
   const handleContextChange = useCallback((id: string, value: string | string[]) => {
     setContext(prev => ({ ...prev, [id]: value }))
@@ -52,11 +51,11 @@ export default function App() {
     setContext({})
     setAnswers({})
     setCompleted(false)
-    setState('welcome')
+    setState('context')
     window.scrollTo(0, 0)
   }, [setContext, setAnswers, setCompleted])
 
-  const showProgress = state !== 'welcome' && state !== 'results'
+  const showProgress = state !== 'results'
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -67,10 +66,6 @@ export default function App() {
       />
 
       <main className="pb-12">
-        {state === 'welcome' && (
-          <WelcomePage onStart={() => setState('context')} />
-        )}
-
         {state === 'context' && (
           <ContextForm
             data={context}
@@ -80,7 +75,7 @@ export default function App() {
         )}
 
         {(['visie', 'docent', 'onderwijs', 'infra'] as const).includes(state as 'visie' | 'docent' | 'onderwijs' | 'infra') &&
-          state !== 'welcome' && state !== 'context' && state !== 'results' && (
+          state !== 'context' && state !== 'results' && (
           <ScanQuestions
             section={state}
             onderwijstype={context.onderwijstype as string | undefined}
