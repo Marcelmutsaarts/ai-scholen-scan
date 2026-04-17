@@ -19,7 +19,7 @@ export default function ContextForm({ data, onChange, onNext }: ContextFormProps
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-2 text-black">Over jullie school</h2>
         <p className="text-body">
-          Deze gegevens helpen ons de resultaten in context te plaatsen. Ze worden niet gescoord.
+          Deze gegevens worden meegenomen in de analyse, maar nergens opgeslagen.
         </p>
       </div>
 

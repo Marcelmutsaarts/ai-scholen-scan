@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import jsPDF from 'jspdf'
 import type { Scores, DimensionAnalysis, RecommendedProduct } from '../utils/scoring'
+import { getDimensionLabel } from '../data/questions'
 
 interface PDFDownloadProps {
   scores: Scores
@@ -48,7 +49,6 @@ class PDFLayout {
   }
 
   addHeader(title: string) {
-    // Purple header bar
     this.pdf.setFillColor(161, 93, 245)
     this.pdf.rect(0, 0, this.pageWidth, 22, 'F')
     this.pdf.setTextColor(255, 255, 255)
@@ -103,6 +103,17 @@ class PDFLayout {
     this.y += 2
   }
 
+  addCaption(text: string, indent = 0) {
+    this.checkPageBreak(4)
+    this.pdf.setFontSize(7)
+    this.pdf.setFont('helvetica', 'italic')
+    this.pdf.setTextColor(150, 150, 150)
+    this.pdf.text(text, this.marginLeft + indent, this.y)
+    this.y += 4
+    this.pdf.setFont('helvetica', 'normal')
+    this.pdf.setTextColor(74, 85, 104)
+  }
+
   addScoreBar(label: string, score: number) {
     this.checkPageBreak(8)
     this.pdf.setFontSize(8)
@@ -110,14 +121,12 @@ class PDFLayout {
     this.pdf.text(label, this.marginLeft, this.y)
     this.pdf.text(`${score.toFixed(1)}/4.0`, this.marginLeft + this.contentWidth - 15, this.y)
 
-    // Bar background
-    const barX = this.marginLeft + 60
-    const barWidth = this.contentWidth - 80
+    const barX = this.marginLeft + 75
+    const barWidth = this.contentWidth - 95
     this.y += 1.5
     this.pdf.setFillColor(235, 223, 255)
     this.pdf.roundedRect(barX, this.y - 2, barWidth, 3, 1.5, 1.5, 'F')
 
-    // Bar fill
     this.pdf.setFillColor(161, 93, 245)
     const fillWidth = (score / 4) * barWidth
     if (fillWidth > 0) {
@@ -125,26 +134,6 @@ class PDFLayout {
     }
 
     this.y += 4
-  }
-
-  addNumberedItem(number: number, label: string, text: string) {
-    this.checkPageBreak(10)
-    this.pdf.setFontSize(8)
-    this.pdf.setFont('helvetica', 'bold')
-    this.pdf.setTextColor(161, 93, 245)
-    this.pdf.text(`${number}.`, this.marginLeft, this.y)
-    this.pdf.setTextColor(121, 71, 186)
-    this.pdf.text(label, this.marginLeft + 5, this.y)
-    this.y += 3.5
-    this.pdf.setFont('helvetica', 'normal')
-    this.pdf.setTextColor(74, 85, 104)
-    const lines = this.pdf.splitTextToSize(text, this.contentWidth - 5)
-    for (const line of lines) {
-      this.checkPageBreak(4)
-      this.pdf.text(line, this.marginLeft + 5, this.y)
-      this.y += 3.5
-    }
-    this.y += 1.5
   }
 }
 
@@ -160,6 +149,7 @@ export default function PDFDownload(props: PDFDownloadProps) {
       const dateStr = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
       const footer = 'AI voor Docenten — aivoordocenten.nl — info@aivoordocenten.nl'
       const layout = new PDFLayout(pdf, footer)
+      const onderwijstype = context.onderwijstype as string | undefined
 
       // ── Pagina 1: Header & overzicht ──────────────────────
       layout.addHeader('AI Maturity Scan — Analyserapport')
@@ -173,7 +163,6 @@ export default function PDFDownload(props: PDFDownloadProps) {
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(74, 85, 104)
-      const onderwijstype = context.onderwijstype as string || ''
       const invuller = context.invullerNaam as string || ''
       pdf.text(`${onderwijstype ? onderwijstype + ' | ' : ''}${dateStr}${invuller ? ' | ' + invuller : ''}`, layout.marginLeft, layout.y)
       layout.y += 8
@@ -190,21 +179,31 @@ export default function PDFDownload(props: PDFDownloadProps) {
       pdf.text(`${scores.total.toFixed(1)}/4.0 — EU AI Act Readiness: ${scores.euReadiness}%`, layout.marginLeft + 4, layout.y + 10)
       layout.y += 20
 
-      // Score bars
+      // Score bars - hoofddimensies
       layout.addSectionTitle('Scores per dimensie')
-      layout.addScoreBar('Visie & Beleid', scores.visie)
-      layout.addScoreBar('Docentvaardigheden', scores.docent)
-      layout.addScoreBar('Onderwijs aan leerlingen', scores.onderwijs)
-      layout.addScoreBar('Infrastructuur', scores.infra)
+      layout.addScoreBar(getDimensionLabel('visie', onderwijstype), scores.visie)
+      layout.addScoreBar(getDimensionLabel('docent', onderwijstype), scores.docent)
+      layout.addScoreBar(getDimensionLabel('onderwijs', onderwijstype), scores.onderwijs)
+      layout.addScoreBar(getDimensionLabel('infra', onderwijstype), scores.infra)
       layout.y += 2
 
-      // Subdimension scores
-      layout.addSubTitle('Docentvaardigheden — subdimensies')
-      layout.addScoreBar('  Mindset', scores.subdimensions.mindset)
-      layout.addScoreBar('  Ethiek', scores.subdimensions.ethiek)
-      layout.addScoreBar('  Kennis', scores.subdimensions.kennis)
-      layout.addScoreBar('  Pedagogiek', scores.subdimensions.pedagogiek)
-      layout.addScoreBar('  Agency', scores.subdimensions.agency)
+      // Docent subdimensies (Raamwerk A-E)
+      layout.addSubTitle('AI-geletterdheid docenten — vijf domeinen')
+      layout.addScoreBar('  A: Mensgerichte AI-mindset', scores.subdimensions.mindset)
+      layout.addScoreBar('  B: Ethiek en verantwoord gebruik', scores.subdimensions.ethiek)
+      layout.addScoreBar('  C: AI-kennis en vaardigheden', scores.subdimensions.kennis)
+      layout.addScoreBar('  D: AI-pedagogiek en didactiek', scores.subdimensions.pedagogiek)
+      layout.addScoreBar('  E: Digital agency', scores.subdimensions.agency)
+      layout.addCaption('Raamwerk AI-geletterdheid voor docenten (aivoordocenten.nl)')
+      layout.y += 2
+
+      // Onderwijs subdimensies (KIES)
+      layout.addSubTitle(`${getDimensionLabel('onderwijs', onderwijstype)} — KIES`)
+      layout.addScoreBar('  K: Kiezen', scores.kiesSubdimensions.kiezen)
+      layout.addScoreBar('  I: Instrueren', scores.kiesSubdimensions.instrueren)
+      layout.addScoreBar('  E: Evalueren', scores.kiesSubdimensions.evalueren)
+      layout.addScoreBar('  S: Spelregels', scores.kiesSubdimensions.spelregels)
+      layout.addCaption('Raamwerk KIES (aivoordocenten.nl)')
       layout.y += 3
 
       // Key findings summary
@@ -228,7 +227,6 @@ export default function PDFDownload(props: PDFDownloadProps) {
         layout.addSectionTitle('Hoe verder?')
         for (const rec of productRecommendations) {
           layout.addParagraph(rec.reason)
-          // Subtiel productlabel
           pdf.setFontSize(7)
           pdf.setTextColor(180, 180, 180)
           layout.checkPageBreak(4)
@@ -240,17 +238,24 @@ export default function PDFDownload(props: PDFDownloadProps) {
 
       // ── Afsluiting ────────────────────────────────────────
       layout.y += 3
-      layout.checkPageBreak(20)
+      layout.checkPageBreak(28)
       pdf.setFillColor(245, 237, 255)
-      pdf.roundedRect(layout.marginLeft, layout.y, layout.contentWidth, 14, 3, 3, 'F')
+      pdf.roundedRect(layout.marginLeft, layout.y, layout.contentWidth, 22, 3, 3, 'F')
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(95, 55, 146)
+      pdf.text('Laten we even samen kijken?', layout.marginLeft + 4, layout.y + 6)
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(95, 55, 146)
-      pdf.text('Wil je dit rapport bespreken of advies over de vervolgstappen?', layout.marginLeft + 4, layout.y + 5)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Neem contact op: info@aivoordocenten.nl — aivoordocenten.nl', layout.marginLeft + 4, layout.y + 10)
+      pdf.setTextColor(74, 85, 104)
+      const ctaText = 'Stuur dit rapport naar info@aivoordocenten.nl en we plannen vrijblijvend een half uur in om samen naar de uitkomsten te kijken.'
+      const ctaLines = pdf.splitTextToSize(ctaText, layout.contentWidth - 8)
+      let ctaY = layout.y + 11
+      for (const line of ctaLines) {
+        pdf.text(line, layout.marginLeft + 4, ctaY)
+        ctaY += 3.5
+      }
 
-      // Footer on last page
       layout.addFooter()
 
       pdf.save(`AI-Maturity-Scan-${schoolName.replace(/\s+/g, '-')}.pdf`)

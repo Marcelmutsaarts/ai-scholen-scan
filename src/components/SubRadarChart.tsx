@@ -11,27 +11,15 @@ import {
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip)
 
 interface SubRadarChartProps {
-  subdimensions: {
-    mindset: number
-    ethiek: number
-    kennis: number
-    pedagogiek: number
-    agency: number
-  }
+  points: { label: string; value: number }[]
 }
 
-export default function SubRadarChart({ subdimensions }: SubRadarChartProps) {
+export default function SubRadarChart({ points }: SubRadarChartProps) {
   const data = {
-    labels: ['A: Mindset', 'B: Ethiek', 'C: Kennis', 'D: Pedagogiek', 'E: Agency'],
+    labels: points.map(p => p.label),
     datasets: [
       {
-        data: [
-          subdimensions.mindset,
-          subdimensions.ethiek,
-          subdimensions.kennis,
-          subdimensions.pedagogiek,
-          subdimensions.agency,
-        ],
+        data: points.map(p => p.value),
         backgroundColor: 'rgba(121, 71, 186, 0.2)',
         borderColor: '#7947ba',
         borderWidth: 2,

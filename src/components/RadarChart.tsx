@@ -8,16 +8,24 @@ import {
   Tooltip,
 } from 'chart.js'
 import type { Scores } from '../utils/scoring'
+import { getLerendenLabel } from '../data/questions'
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip)
 
 interface RadarChartProps {
   scores: Scores
+  onderwijstype?: string
 }
 
-export default function RadarChart({ scores }: RadarChartProps) {
+export default function RadarChart({ scores, onderwijstype }: RadarChartProps) {
+  const lerenden = getLerendenLabel(onderwijstype)
   const data = {
-    labels: ['Visie & Beleid', 'Docentvaardigheden', 'Onderwijs\naan leerlingen', 'Infrastructuur'],
+    labels: [
+      'Visie & Beleid',
+      ['AI-geletterdheid', 'docenten'],
+      ['AI-vaardigheid', lerenden],
+      'Infrastructuur',
+    ],
     datasets: [
       {
         data: [scores.visie, scores.docent, scores.onderwijs, scores.infra],

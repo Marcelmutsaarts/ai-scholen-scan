@@ -32,7 +32,7 @@ export const contextFields: ContextField[] = [
 ]
 
 export const questions: Question[] = [
-  // Deel 2: Visie en Beleid
+  // ── Visie en Beleid (4) ────────────────────────────────────────────────
   {
     id: 1,
     text: 'Heeft jullie school een vastgesteld standpunt over AI in het onderwijs?',
@@ -46,7 +46,7 @@ export const questions: Question[] = [
   },
   {
     id: 2,
-    text: 'Zijn er richtlijnen voor leerlingen over AI-gebruik?',
+    text: 'Zijn er richtlijnen voor leerlingen of studenten over AI-gebruik?',
     dimension: 'visie',
     options: [
       { label: 'Nee', score: 1 },
@@ -77,7 +77,9 @@ export const questions: Question[] = [
       { label: 'We hebben concrete stappen gezet om hieraan te voldoen', score: 4 },
     ],
   },
-  // Deel 3: Docentvaardigheden - Mindset
+
+  // ── AI-geletterdheid docenten (10) — raamwerk A-E ─────────────────────
+  // A: Mensgerichte AI-mindset
   {
     id: 5,
     text: 'Hoe zou je de houding van het team tegenover AI omschrijven?',
@@ -92,17 +94,17 @@ export const questions: Question[] = [
   },
   {
     id: 6,
-    text: 'Zien docenten AI als iets dat bij hun vak hoort?',
+    text: 'Kunnen docenten hun eigen rol scherp houden naast AI (wat doet AI, wat doe ik als docent)?',
     dimension: 'docent',
     subdimension: 'mindset',
     options: [
-      { label: 'Nee, het wordt gezien als iets technisch of apart', score: 1 },
-      { label: 'Sommigen zien het verband, de meesten niet', score: 2 },
-      { label: 'Een groeiende groep ziet het als relevant voor hun vak', score: 3 },
-      { label: 'De meerderheid ziet AI als onderdeel van hun professionele ontwikkeling', score: 4 },
+      { label: 'Nee, hier wordt niet over nagedacht', score: 1 },
+      { label: 'Sommigen denken hier bewust over na', score: 2 },
+      { label: 'Een groeiende groep kan dit onderscheid maken en onderbouwen', score: 3 },
+      { label: 'De meerderheid maakt bewuste keuzes vanuit eigen professionele waarden', score: 4 },
     ],
   },
-  // Ethiek
+  // B: Ethiek en verantwoord gebruik
   {
     id: 7,
     text: 'Kunnen docenten een bewuste afweging maken over wanneer AI wel of niet passend is in hun onderwijs?',
@@ -117,7 +119,7 @@ export const questions: Question[] = [
   },
   {
     id: 8,
-    text: 'Zijn docenten op de hoogte van de juridische kaders rond AI (AVG, AI Act)?',
+    text: 'Zijn docenten op de hoogte van de juridische kaders rond AI (AVG, AI Act) en de privacy-afwegingen bij AI-tools?',
     dimension: 'docent',
     subdimension: 'ethiek',
     options: [
@@ -127,10 +129,10 @@ export const questions: Question[] = [
       { label: 'Goed, er is voorlichting gegeven en het is onderdeel van het beleid', score: 4 },
     ],
   },
-  // Kennis
+  // C: AI-kennis en vaardigheden
   {
     id: 9,
-    text: 'Begrijpen docenten op hoofdlijnen hoe generatieve AI werkt?',
+    text: 'Begrijpen docenten op hoofdlijnen hoe generatieve AI werkt (trainingsdata, hallucinaties, beperkingen)?',
     dimension: 'docent',
     subdimension: 'kennis',
     options: [
@@ -142,7 +144,7 @@ export const questions: Question[] = [
   },
   {
     id: 10,
-    text: 'Kunnen docenten AI-output kritisch beoordelen op juistheid en bruikbaarheid?',
+    text: 'Kunnen docenten AI effectief aansturen (prompten) en de output kritisch beoordelen?',
     dimension: 'docent',
     subdimension: 'kennis',
     options: [
@@ -152,7 +154,7 @@ export const questions: Question[] = [
       { label: 'De meerderheid gebruikt AI kritisch en iteratief', score: 4 },
     ],
   },
-  // Pedagogiek & Didactiek
+  // D: AI-pedagogiek en didactiek
   {
     id: 11,
     text: 'Zetten docenten AI bewust in als didactisch middel (niet alleen voor eigen voorbereiding)?',
@@ -161,7 +163,7 @@ export const questions: Question[] = [
     options: [
       { label: 'Nee, of alleen voor eigen lesvoorbereiding', score: 1 },
       { label: 'Enkelen experimenteren met AI in de les', score: 2 },
-      { label: 'Meerdere docenten zetten AI structureel in met leerlingen', score: 3 },
+      { label: 'Meerdere docenten zetten AI structureel in met leerlingen of studenten', score: 3 },
       { label: 'AI is geïntegreerd in het didactisch repertoire van veel docenten', score: 4 },
     ],
   },
@@ -177,7 +179,7 @@ export const questions: Question[] = [
       { label: 'Er is een bewust toetsbeleid dat rekening houdt met AI', score: 4 },
     ],
   },
-  // Agency
+  // E: Digital agency
   {
     id: 13,
     text: 'Delen docenten actief kennis en ervaring over AI met collega\'s?',
@@ -202,44 +204,113 @@ export const questions: Question[] = [
       { label: 'De meerderheid ontwikkelt zichzelf en coacht anderen', score: 4 },
     ],
   },
-  // Deel 4: Onderwijs aan leerlingen
+
+  // ── AI-vaardigheid leerlingen/studenten (8) — KIES-raamwerk ───────────
+  // K: Kiezen
   {
     id: 15,
-    text: 'Wordt AI-geletterdheid expliciet onderwezen aan leerlingen?',
+    text: 'Leren leerlingen of studenten bewust te kiezen wanneer ze AI wel of niet inzetten bij een taak?',
     dimension: 'onderwijs',
+    subdimension: 'kiezen',
     options: [
-      { label: 'Nee', score: 1 },
+      { label: 'Nee, dit komt niet aan bod', score: 1 },
       { label: 'Incidenteel, bij een enkel vak of project', score: 2 },
-      { label: 'Structureel bij meerdere vakken', score: 3 },
-      { label: 'Schoolbreed geïntegreerd met een doorlopende leerlijn', score: 4 },
+      { label: 'Bij meerdere vakken wordt dit expliciet besproken', score: 3 },
+      { label: 'Schoolbreed, leerlingen wegen per opdracht af hoe ze AI inzetten', score: 4 },
     ],
   },
   {
     id: 16,
-    text: 'Leren leerlingen hoe ze AI verantwoord en effectief kunnen inzetten?',
+    text: 'Wordt besproken welke rol AI in een opdracht kan spelen (zoals tutor, coach, schrijver of samenvatter)?',
     dimension: 'onderwijs',
+    subdimension: 'kiezen',
     options: [
-      { label: 'Nee, of het wordt alleen verboden', score: 1 },
-      { label: 'Sommige docenten besteden er aandacht aan', score: 2 },
-      { label: 'Er zijn lessen of modules over AI-gebruik', score: 3 },
-      { label: 'Er is een gestructureerd programma', score: 4 },
+      { label: 'Nee', score: 1 },
+      { label: 'Soms, afhankelijk van de docent', score: 2 },
+      { label: 'Structureel bij meerdere vakken', score: 3 },
+      { label: 'Schoolbreed, met gedeeld vocabulaire over AI-rollen', score: 4 },
     ],
   },
-  // Deel 5: Infrastructuur
+  // I: Instrueren
   {
     id: 17,
-    text: 'Welke AI-tools zijn beschikbaar en hoe zijn ze geregeld?',
-    dimension: 'infra',
+    text: 'Krijgen leerlingen of studenten expliciet instructie over het aansturen van AI (prompten, rol en context meegeven)?',
+    dimension: 'onderwijs',
+    subdimension: 'instrueren',
     options: [
-      { label: 'Geen, of docenten gebruiken eigen gratis accounts', score: 1 },
-      { label: 'De school heeft gratis tools geadviseerd maar niets geregeld', score: 2 },
-      { label: 'De school heeft licenties voor één of meer AI-tools', score: 3 },
-      { label: 'Er is een breed, beheerd aanbod met duidelijke keuzes per doel', score: 4 },
+      { label: 'Nee', score: 1 },
+      { label: 'Sommige docenten besteden er aandacht aan', score: 2 },
+      { label: 'Er zijn lessen of modules over effectief AI-gebruik', score: 3 },
+      { label: 'Er is een doorlopende leerlijn waarin dit terugkomt', score: 4 },
     ],
   },
   {
     id: 18,
-    text: 'Zijn er afspraken over privacy en dataverwerking bij AI-tools?',
+    text: 'Leren leerlingen of studenten dat de manier waarop ze AI aansturen invloed heeft op de kwaliteit van de output?',
+    dimension: 'onderwijs',
+    subdimension: 'instrueren',
+    options: [
+      { label: 'Nee, hier wordt niet bij stilgestaan', score: 1 },
+      { label: 'Enkele docenten maken dit bespreekbaar', score: 2 },
+      { label: 'Meerdere docenten oefenen dit in hun lessen', score: 3 },
+      { label: 'Leerlingen oefenen dit structureel en iteratief', score: 4 },
+    ],
+  },
+  // E: Evalueren
+  {
+    id: 19,
+    text: 'Leren leerlingen of studenten AI-output kritisch te beoordelen op juistheid, bias en hallucinaties?',
+    dimension: 'onderwijs',
+    subdimension: 'evalueren',
+    options: [
+      { label: 'Nee', score: 1 },
+      { label: 'Incidenteel, vooral bij een enkel vak', score: 2 },
+      { label: 'Structureel bij meerdere vakken', score: 3 },
+      { label: 'Het is onderdeel van het curriculum en wordt geoefend', score: 4 },
+    ],
+  },
+  {
+    id: 20,
+    text: 'Oefenen leerlingen of studenten eigenaarschap over AI-output (begrijpen wat er staat, bijsturen, zelf verantwoorden)?',
+    dimension: 'onderwijs',
+    subdimension: 'evalueren',
+    options: [
+      { label: 'Nee, output wordt vaak klakkeloos overgenomen', score: 1 },
+      { label: 'Enkelen doen dit bewust, de meesten niet', score: 2 },
+      { label: 'Meerdere vakken stellen dit expliciet als eis', score: 3 },
+      { label: 'Schoolbreed verwacht en geoefend in opdrachten en toetsing', score: 4 },
+    ],
+  },
+  // S: Spelregels
+  {
+    id: 21,
+    text: 'Zijn er voor leerlingen of studenten heldere afspraken over wanneer AI wel of niet gebruikt mag worden?',
+    dimension: 'onderwijs',
+    subdimension: 'spelregels',
+    options: [
+      { label: 'Nee', score: 1 },
+      { label: 'Informeel, verschilt per docent', score: 2 },
+      { label: 'Schoolbreed afgesproken per vak of opdrachttype', score: 3 },
+      { label: 'Vastgelegd en herkenbaar voor leerlingen over alle vakken heen', score: 4 },
+    ],
+  },
+  {
+    id: 22,
+    text: 'Wordt met leerlingen of studenten gesproken over bredere vragen rond AI (privacy, duurzaamheid, invloed op eigen denken)?',
+    dimension: 'onderwijs',
+    subdimension: 'spelregels',
+    options: [
+      { label: 'Nee', score: 1 },
+      { label: 'Incidenteel, afhankelijk van een docent', score: 2 },
+      { label: 'Bij meerdere vakken structureel aan de orde', score: 3 },
+      { label: 'Verweven in het curriculum als reflectieve laag', score: 4 },
+    ],
+  },
+
+  // ── Infrastructuur (3) ─────────────────────────────────────────────────
+  {
+    id: 23,
+    text: 'Zijn er afspraken over privacy en dataverwerking bij AI-tools (AVG, verwerkersovereenkomsten)?',
     dimension: 'infra',
     options: [
       { label: 'Nee', score: 1 },
@@ -248,45 +319,111 @@ export const questions: Question[] = [
       { label: 'Volledig geregeld met verwerkersovereenkomsten en AVG-beleid', score: 4 },
     ],
   },
+  {
+    id: 24,
+    text: 'Kunnen docenten en leerlingen ergens terecht met vragen of problemen rond AI-tools?',
+    dimension: 'infra',
+    options: [
+      { label: 'Nee, iedereen zoekt het zelf uit', score: 1 },
+      { label: 'Informeel, via een enthousiaste collega', score: 2 },
+      { label: 'Er is een vast aanspreekpunt of helpdesk', score: 3 },
+      { label: 'Er is actieve ondersteuning, inclusief begeleiding bij gebruik', score: 4 },
+    ],
+  },
+  {
+    id: 25,
+    text: 'Is er structureel budget en tijd gereserveerd voor scholing en ontwikkeling op AI?',
+    dimension: 'infra',
+    options: [
+      { label: 'Nee', score: 1 },
+      { label: 'Incidenteel, op projectbasis', score: 2 },
+      { label: 'Jaarlijks budget, maar beperkt', score: 3 },
+      { label: 'Structureel budget én tijd voor docenten', score: 4 },
+    ],
+  },
 ]
 
 export const dimensionLabels: Record<string, string> = {
   visie: 'Visie & Beleid',
-  docent: 'Docentvaardigheden',
-  onderwijs: 'Onderwijs aan leerlingen',
+  docent: 'AI-geletterdheid docenten',
+  onderwijs: 'AI-vaardigheid leerlingen',
   infra: 'Infrastructuur',
 }
 
+// Dynamisch: "leerlingen" of "studenten" op basis van onderwijstype
+export function getDimensionLabel(key: string, onderwijstype?: string): string {
+  if (key === 'onderwijs') {
+    const isStudent = onderwijstype === 'MBO' || onderwijstype === 'HBO'
+    return isStudent ? 'AI-vaardigheid studenten' : 'AI-vaardigheid leerlingen'
+  }
+  return dimensionLabels[key] || key
+}
+
+export function getLerendenLabel(onderwijstype?: string): string {
+  return (onderwijstype === 'MBO' || onderwijstype === 'HBO') ? 'studenten' : 'leerlingen'
+}
+
 export const subdimensionLabels: Record<string, string> = {
-  mindset: 'Mindset',
-  ethiek: 'Ethiek',
-  kennis: 'Kennis',
-  pedagogiek: 'Pedagogiek & Didactiek',
-  agency: 'Agency',
+  // Docentvaardigheden (Raamwerk AI-geletterdheid A-E)
+  mindset: 'Mensgerichte AI-mindset',
+  ethiek: 'Ethiek en verantwoord gebruik',
+  kennis: 'AI-kennis en vaardigheden',
+  pedagogiek: 'AI-pedagogiek en didactiek',
+  agency: 'Digital agency',
+  // AI-vaardigheid leerlingen/studenten (KIES)
+  kiezen: 'Kiezen',
+  instrueren: 'Instrueren',
+  evalueren: 'Evalueren',
+  spelregels: 'Spelregels',
 }
 
 export const sectionOrder = ['context', 'visie', 'docent', 'onderwijs', 'infra'] as const
 export type SectionKey = typeof sectionOrder[number]
 
-export const sectionMeta: Record<string, { title: string; subtitle: string; questionIds: number[] }> = {
-  visie: {
-    title: 'Visie en Beleid',
-    subtitle: 'Hoe is AI verankerd in de schoolvisie en het beleid?',
-    questionIds: [1, 2, 3, 4],
-  },
-  docent: {
-    title: 'Docentvaardigheden',
-    subtitle: 'Hoe staan jullie docenten ervoor op het gebied van AI-geletterdheid?',
-    questionIds: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-  },
-  onderwijs: {
-    title: 'Onderwijs aan leerlingen',
-    subtitle: 'In hoeverre leren leerlingen over en met AI?',
-    questionIds: [15, 16],
-  },
-  infra: {
-    title: 'Infrastructuur',
-    subtitle: 'Hoe is de technische en organisatorische basis geregeld?',
-    questionIds: [17, 18],
-  },
+export interface SectionMeta {
+  title: string
+  subtitle: string
+  questionIds: number[]
+  footnote?: string
 }
+
+export function getSectionMeta(section: string, onderwijstype?: string): SectionMeta {
+  const lerenden = getLerendenLabel(onderwijstype)
+  const dimLabel = getDimensionLabel(section, onderwijstype)
+
+  const meta: Record<string, SectionMeta> = {
+    visie: {
+      title: 'Visie en Beleid',
+      subtitle: 'Hoe is AI verankerd in de schoolvisie en het beleid?',
+      questionIds: [1, 2, 3, 4],
+    },
+    docent: {
+      title: dimLabel,
+      subtitle: 'Hoe staat het team ervoor op de vijf domeinen van het Raamwerk AI-geletterdheid?',
+      questionIds: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+      footnote: 'Gebaseerd op het Raamwerk AI-geletterdheid voor docenten (aivoordocenten.nl).',
+    },
+    onderwijs: {
+      title: dimLabel,
+      subtitle: `In hoeverre leren ${lerenden} bewust en verantwoord met AI om te gaan?`,
+      questionIds: [15, 16, 17, 18, 19, 20, 21, 22],
+      footnote: `Gebaseerd op het raamwerk KIES voor AI-vaardigheid van ${lerenden} (aivoordocenten.nl).`,
+    },
+    infra: {
+      title: 'Infrastructuur',
+      subtitle: 'Hoe zijn privacy, ondersteuning en budget georganiseerd?',
+      questionIds: [23, 24, 25],
+    },
+  }
+  return meta[section]
+}
+
+// Backwards-compat export (gebruikt door oudere code; geen dynamiek nodig)
+export const sectionMeta: Record<string, { title: string; subtitle: string; questionIds: number[] }> = {
+  visie: getSectionMeta('visie'),
+  docent: getSectionMeta('docent'),
+  onderwijs: getSectionMeta('onderwijs'),
+  infra: getSectionMeta('infra'),
+}
+
+export const TOTAL_QUESTIONS = questions.length

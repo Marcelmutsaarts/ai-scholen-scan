@@ -20,6 +20,11 @@ const tierBadgeColors: Record<string, string> = {
   voorlopend: 'bg-emerald-100 text-emerald-700',
 }
 
+const dimensionFootnotes: Record<string, string> = {
+  docent: 'Onderverdeling op basis van het Raamwerk AI-geletterdheid voor docenten (aivoordocenten.nl).',
+  onderwijs: 'Onderverdeling op basis van het raamwerk KIES (aivoordocenten.nl).',
+}
+
 export default function DimensionAnalysis({ analyses }: DimensionAnalysisProps) {
   const mainDimensions = analyses.filter(a => !a.isSubdimension)
 
@@ -30,6 +35,7 @@ export default function DimensionAnalysis({ analyses }: DimensionAnalysisProps) 
       <div className="space-y-4">
         {mainDimensions.map(dim => {
           const subdimensions = analyses.filter(a => a.isSubdimension && a.parentDimension === dim.key)
+          const footnote = dimensionFootnotes[dim.key]
 
           return (
             <div key={dim.key}>
@@ -40,6 +46,9 @@ export default function DimensionAnalysis({ analyses }: DimensionAnalysisProps) 
                   {subdimensions.map(sub => (
                     <AnalysisCard key={sub.key} analysis={sub} compact />
                   ))}
+                  {footnote && (
+                    <p className="text-xs text-gray-400 italic pt-1">{footnote}</p>
+                  )}
                 </div>
               )}
             </div>

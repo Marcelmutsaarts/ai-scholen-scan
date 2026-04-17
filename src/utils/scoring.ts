@@ -1,4 +1,4 @@
-import { questions, dimensionLabels, subdimensionLabels } from '../data/questions'
+import { questions, getDimensionLabel, subdimensionLabels } from '../data/questions'
 import {
   maturityLevels,
   dimensionDescriptions,
@@ -21,6 +21,12 @@ export interface Scores {
     kennis: number
     pedagogiek: number
     agency: number
+  }
+  kiesSubdimensions: {
+    kiezen: number
+    instrueren: number
+    evalueren: number
+    spelregels: number
   }
   total: number
   euReadiness: number
@@ -59,12 +65,18 @@ export function calculateScores(answers: Record<number, number>): Scores {
     onderwijs: [],
     infra: [],
   }
-  const subScores: Record<string, number[]> = {
+  const docentSubScores: Record<string, number[]> = {
     mindset: [],
     ethiek: [],
     kennis: [],
     pedagogiek: [],
     agency: [],
+  }
+  const kiesSubScores: Record<string, number[]> = {
+    kiezen: [],
+    instrueren: [],
+    evalueren: [],
+    spelregels: [],
   }
 
   for (const q of questions) {
@@ -72,7 +84,11 @@ export function calculateScores(answers: Record<number, number>): Scores {
     if (score !== undefined) {
       dimensionScores[q.dimension].push(score)
       if (q.subdimension) {
-        subScores[q.subdimension].push(score)
+        if (q.dimension === 'docent' && q.subdimension in docentSubScores) {
+          docentSubScores[q.subdimension].push(score)
+        } else if (q.dimension === 'onderwijs' && q.subdimension in kiesSubScores) {
+          kiesSubScores[q.subdimension].push(score)
+        }
       }
     }
   }
@@ -85,17 +101,24 @@ export function calculateScores(answers: Record<number, number>): Scores {
   const infra = avg(dimensionScores.infra)
 
   const subdimensions = {
-    mindset: avg(subScores.mindset),
-    ethiek: avg(subScores.ethiek),
-    kennis: avg(subScores.kennis),
-    pedagogiek: avg(subScores.pedagogiek),
-    agency: avg(subScores.agency),
+    mindset: avg(docentSubScores.mindset),
+    ethiek: avg(docentSubScores.ethiek),
+    kennis: avg(docentSubScores.kennis),
+    pedagogiek: avg(docentSubScores.pedagogiek),
+    agency: avg(docentSubScores.agency),
+  }
+
+  const kiesSubdimensions = {
+    kiezen: avg(kiesSubScores.kiezen),
+    instrueren: avg(kiesSubScores.instrueren),
+    evalueren: avg(kiesSubScores.evalueren),
+    spelregels: avg(kiesSubScores.spelregels),
   }
 
   const total = avg([visie, docent, onderwijs, infra])
   const euReadiness = Math.round(((total - 1) / 3) * 100)
 
-  return { visie, docent, onderwijs, infra, subdimensions, total, euReadiness }
+  return { visie, docent, onderwijs, infra, subdimensions, kiesSubdimensions, total, euReadiness }
 }
 
 export function getMaturityLevel(score: number) {
@@ -121,10 +144,9 @@ function getTierLabel(tier: string): string {
   return map[tier] || tier
 }
 
-export function getDimensionAnalysis(scores: Scores): DimensionAnalysis[] {
+export function getDimensionAnalysis(scores: Scores, onderwijstype?: string): DimensionAnalysis[] {
   const result: DimensionAnalysis[] = []
 
-  // Main dimensions
   const dims: { key: string; score: number }[] = [
     { key: 'visie', score: scores.visie },
     { key: 'docent', score: scores.docent },
@@ -137,7 +159,7 @@ export function getDimensionAnalysis(scores: Scores): DimensionAnalysis[] {
     const narrative = dimensionNarratives[dim.key]?.[tier] || ''
     result.push({
       key: dim.key,
-      label: dimensionLabels[dim.key] || dim.key,
+      label: getDimensionLabel(dim.key, onderwijstype),
       score: dim.score,
       tier,
       tierLabel: getTierLabel(tier),
@@ -145,7 +167,6 @@ export function getDimensionAnalysis(scores: Scores): DimensionAnalysis[] {
       isSubdimension: false,
     })
 
-    // Add subdimensions after docent
     if (dim.key === 'docent') {
       const subs: { key: string; score: number }[] = [
         { key: 'mindset', score: scores.subdimensions.mindset },
@@ -154,7 +175,6 @@ export function getDimensionAnalysis(scores: Scores): DimensionAnalysis[] {
         { key: 'pedagogiek', score: scores.subdimensions.pedagogiek },
         { key: 'agency', score: scores.subdimensions.agency },
       ]
-
       for (const sub of subs) {
         const subTier = getMaturityTier(sub.score)
         const subNarrative = subdimensionNarratives[sub.key]?.[subTier] || ''
@@ -167,6 +187,29 @@ export function getDimensionAnalysis(scores: Scores): DimensionAnalysis[] {
           narrative: subNarrative,
           isSubdimension: true,
           parentDimension: 'docent',
+        })
+      }
+    }
+
+    if (dim.key === 'onderwijs') {
+      const subs: { key: string; score: number }[] = [
+        { key: 'kiezen', score: scores.kiesSubdimensions.kiezen },
+        { key: 'instrueren', score: scores.kiesSubdimensions.instrueren },
+        { key: 'evalueren', score: scores.kiesSubdimensions.evalueren },
+        { key: 'spelregels', score: scores.kiesSubdimensions.spelregels },
+      ]
+      for (const sub of subs) {
+        const subTier = getMaturityTier(sub.score)
+        const subNarrative = subdimensionNarratives[sub.key]?.[subTier] || ''
+        result.push({
+          key: sub.key,
+          label: subdimensionLabels[sub.key] || sub.key,
+          score: sub.score,
+          tier: subTier,
+          tierLabel: getTierLabel(subTier),
+          narrative: subNarrative,
+          isSubdimension: true,
+          parentDimension: 'onderwijs',
         })
       }
     }
@@ -198,7 +241,6 @@ export function getProductRecommendations(
     }
   }
 
-  // Sort by priority (from rules), deduplicate
   const seen = new Set<string>()
   const sorted = recommended
     .sort((a, b) => {
@@ -212,7 +254,6 @@ export function getProductRecommendations(
       return true
     })
 
-  // Return max 4 recommendations
   return sorted.slice(0, 5)
 }
 
@@ -221,26 +262,30 @@ export function getActionPlan(
   context: Record<string, string | string[]>
 ): ActionPlanItem[] {
   const items: ActionPlanItem[] = []
+  const onderwijstype = context.onderwijstype as string | undefined
 
-  // Collect all matching templates
   for (const tmpl of actionStepTemplates) {
     let score: number
     let label: string
 
     if (tmpl.subdimension) {
-      score = scores.subdimensions[tmpl.subdimension as keyof typeof scores.subdimensions]
+      if (tmpl.subdimension in scores.subdimensions) {
+        score = scores.subdimensions[tmpl.subdimension as keyof typeof scores.subdimensions]
+      } else if (tmpl.subdimension in scores.kiesSubdimensions) {
+        score = scores.kiesSubdimensions[tmpl.subdimension as keyof typeof scores.kiesSubdimensions]
+      } else {
+        continue
+      }
       label = subdimensionLabels[tmpl.subdimension] || tmpl.subdimension
     } else {
       score = scores[tmpl.dimension as keyof Scores] as number
-      label = dimensionLabels[tmpl.dimension] || tmpl.dimension
+      label = getDimensionLabel(tmpl.dimension, onderwijstype)
     }
 
     if (score >= tmpl.minScore && score <= tmpl.maxScore) {
-      // Skip VO-specific product links for non-VO schools
       let productLink: ActionPlanItem['productLink'] = undefined
       if (tmpl.productId) {
         if (tmpl.productId === 'leerlingen-vo' && context.onderwijstype !== 'VO') {
-          // Skip this product link but keep the action
           productLink = undefined
         } else {
           const product = products.find(p => p.id === tmpl.productId)
@@ -259,10 +304,8 @@ export function getActionPlan(
     }
   }
 
-  // Sort by priority, take top 5
   items.sort((a, b) => a.priority - b.priority)
 
-  // Deduplicate actions (same text)
   const seen = new Set<string>()
   const unique = items.filter(item => {
     if (seen.has(item.action)) return false
@@ -270,19 +313,18 @@ export function getActionPlan(
     return true
   })
 
-  // Re-number priorities 1-5
   return unique.slice(0, 5).map((item, idx) => ({
     ...item,
     priority: idx + 1,
   }))
 }
 
-export function getKeyFindings(scores: Scores) {
+export function getKeyFindings(scores: Scores, onderwijstype?: string) {
   const dims = [
-    { key: 'visie', label: 'Visie & Beleid', score: scores.visie },
-    { key: 'docent', label: 'Docentvaardigheden', score: scores.docent },
-    { key: 'onderwijs', label: 'Onderwijs aan leerlingen', score: scores.onderwijs },
-    { key: 'infra', label: 'Infrastructuur', score: scores.infra },
+    { key: 'visie', label: getDimensionLabel('visie', onderwijstype), score: scores.visie },
+    { key: 'docent', label: getDimensionLabel('docent', onderwijstype), score: scores.docent },
+    { key: 'onderwijs', label: getDimensionLabel('onderwijs', onderwijstype), score: scores.onderwijs },
+    { key: 'infra', label: getDimensionLabel('infra', onderwijstype), score: scores.infra },
   ]
 
   const sorted = [...dims].sort((a, b) => b.score - a.score)
@@ -292,6 +334,10 @@ export function getKeyFindings(scores: Scores) {
   let recommendationKey = weakest.key
   if (weakest.key === 'docent') {
     const subs = Object.entries(scores.subdimensions) as [string, number][]
+    const lowestSub = subs.sort((a, b) => a[1] - b[1])[0]
+    recommendationKey = lowestSub[0]
+  } else if (weakest.key === 'onderwijs') {
+    const subs = Object.entries(scores.kiesSubdimensions) as [string, number][]
     const lowestSub = subs.sort((a, b) => a[1] - b[1])[0]
     recommendationKey = lowestSub[0]
   }
@@ -307,6 +353,6 @@ export function getKeyFindings(scores: Scores) {
       score: weakest.score,
       description: dimensionDescriptions[weakest.key].low,
     },
-    recommendation: firstStepRecommendations[recommendationKey],
+    recommendation: firstStepRecommendations[recommendationKey] || firstStepRecommendations[weakest.key],
   }
 }

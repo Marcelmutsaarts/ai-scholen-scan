@@ -1,7 +1,8 @@
-import { questions, sectionMeta } from '../data/questions'
+import { questions, getSectionMeta } from '../data/questions'
 
 interface ScanQuestionsProps {
   section: string
+  onderwijstype?: string
   answers: Record<number, number>
   onAnswer: (questionId: number, score: number) => void
   onNext: () => void
@@ -10,8 +11,8 @@ interface ScanQuestionsProps {
   isLast: boolean
 }
 
-export default function ScanQuestions({ section, answers, onAnswer, onNext, onPrev, isFirst, isLast }: ScanQuestionsProps) {
-  const meta = sectionMeta[section]
+export default function ScanQuestions({ section, onderwijstype, answers, onAnswer, onNext, onPrev, isFirst, isLast }: ScanQuestionsProps) {
+  const meta = getSectionMeta(section, onderwijstype)
   const sectionQuestions = questions.filter(q => meta.questionIds.includes(q.id))
   const allAnswered = sectionQuestions.every(q => answers[q.id] !== undefined)
 
@@ -20,6 +21,9 @@ export default function ScanQuestions({ section, answers, onAnswer, onNext, onPr
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-2 text-black">{meta.title}</h2>
         <p className="text-body">{meta.subtitle}</p>
+        {meta.footnote && (
+          <p className="text-xs text-gray-400 italic mt-1">{meta.footnote}</p>
+        )}
       </div>
 
       <div className="space-y-6">

@@ -7,6 +7,7 @@ import {
   getProductRecommendations,
   type Scores,
 } from '../utils/scoring'
+import { getDimensionLabel } from '../data/questions'
 import RadarChart from './RadarChart'
 import SubRadarChart from './SubRadarChart'
 import MaturityLevel from './MaturityLevel'
@@ -23,11 +24,26 @@ interface ResultsPageProps {
 }
 
 export default function ResultsPage({ answers, context, onRestart }: ResultsPageProps) {
+  const onderwijstype = context.onderwijstype as string | undefined
   const scores = useMemo(() => calculateScores(answers), [answers])
   const maturity = useMemo(() => getMaturityLevel(scores.total), [scores])
-  const findings = useMemo(() => getKeyFindings(scores), [scores])
-  const analyses = useMemo(() => getDimensionAnalysis(scores), [scores])
+  const findings = useMemo(() => getKeyFindings(scores, onderwijstype), [scores, onderwijstype])
+  const analyses = useMemo(() => getDimensionAnalysis(scores, onderwijstype), [scores, onderwijstype])
   const productRecs = useMemo(() => getProductRecommendations(scores, context), [scores, context])
+
+  const docentPoints = [
+    { label: 'A: Mindset', value: scores.subdimensions.mindset },
+    { label: 'B: Ethiek', value: scores.subdimensions.ethiek },
+    { label: 'C: Kennis', value: scores.subdimensions.kennis },
+    { label: 'D: Pedagogiek', value: scores.subdimensions.pedagogiek },
+    { label: 'E: Agency', value: scores.subdimensions.agency },
+  ]
+  const kiesPoints = [
+    { label: 'K: Kiezen', value: scores.kiesSubdimensions.kiezen },
+    { label: 'I: Instrueren', value: scores.kiesSubdimensions.instrueren },
+    { label: 'E: Evalueren', value: scores.kiesSubdimensions.evalueren },
+    { label: 'S: Spelregels', value: scores.kiesSubdimensions.spelregels },
+  ]
 
   return (
     <div className="animate-fade-in max-w-3xl mx-auto py-8 px-4">
@@ -39,36 +55,35 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
       </div>
 
       <div id="results-content">
-        {/* Maturity Level */}
         <MaturityLevel maturity={maturity} score={scores.total} />
 
-        {/* EU AI Act Readiness */}
         <EUReadiness percentage={scores.euReadiness} />
 
         {/* Radar Charts */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm mb-6">
+          <h3 className="font-semibold text-center mb-4 text-black">Overzicht dimensies</h3>
+          <RadarChart scores={scores} onderwijstype={onderwijstype} />
+        </div>
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-center mb-4 text-black">Overzicht dimensies</h3>
-            <RadarChart scores={scores} />
+            <h3 className="font-semibold text-center mb-1 text-black">AI-geletterdheid docenten</h3>
+            <p className="text-xs text-center text-gray-500 mb-3">5 domeinen (Raamwerk AI-geletterdheid)</p>
+            <SubRadarChart points={docentPoints} />
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-center mb-4 text-black">Docentvaardigheden</h3>
-            <SubRadarChart subdimensions={scores.subdimensions} />
+            <h3 className="font-semibold text-center mb-1 text-black">{getDimensionLabel('onderwijs', onderwijstype)}</h3>
+            <p className="text-xs text-center text-gray-500 mb-3">4 onderdelen (raamwerk KIES)</p>
+            <SubRadarChart points={kiesPoints} />
           </div>
         </div>
 
-        {/* Score Details */}
-        <ScoreDetails scores={scores} />
+        <ScoreDetails scores={scores} onderwijstype={onderwijstype} />
 
-        {/* Dimension Analysis — narratieve rapportage */}
         <DimensionAnalysis analyses={analyses} />
 
-        {/* Key Findings — samenvatting */}
         <KeyFindings findings={findings} />
 
-        {/* Scholingsadvies — productaanbevelingen */}
         <TrainingRecommendations recommendations={productRecs} />
-
       </div>
 
       {/* CTA en acties */}
@@ -82,19 +97,14 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
           productRecommendations={productRecs}
         />
 
-        <div className="bg-purple-50 rounded-xl p-6 text-center">
-          <p className="text-sm text-body mb-1">
-            Wil je dit rapport bespreken of advies over de vervolgstappen?
+        <div className="bg-purple-50 rounded-xl p-6">
+          <h3 className="font-semibold text-purple-800 mb-2">Laten we even samen kijken?</h3>
+          <p className="text-sm text-body mb-3 leading-relaxed">
+            Dit rapport vertelt een deel van het verhaal. De gesprekken die erachter zitten — waarom scoren jullie hier zo, wat zijn de logische volgende stappen, wat past bij jullie school — doen we het liefst persoonlijk. Stuur het PDF-rapport naar <a href="mailto:info@aivoordocenten.nl" className="text-purple-600 font-medium hover:text-purple-800 underline">info@aivoordocenten.nl</a> en we plannen vrijblijvend een half uur in om samen te kijken.
           </p>
-          <p className="text-sm text-body mb-3">
-            We denken graag met jullie mee.
+          <p className="text-xs text-gray-500">
+            Geen verplichtingen, geen verkooppraatje. We denken mee en waar het past vertellen we wat we kunnen betekenen.
           </p>
-          <a
-            href="mailto:info@aivoordocenten.nl"
-            className="text-purple-400 font-medium hover:text-purple-700 transition text-sm"
-          >
-            Neem contact op: info@aivoordocenten.nl
-          </a>
         </div>
 
         <div className="text-center">
@@ -110,12 +120,12 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
   )
 }
 
-function ScoreDetails({ scores }: { scores: Scores }) {
+function ScoreDetails({ scores, onderwijstype }: { scores: Scores; onderwijstype?: string }) {
   const dims = [
-    { label: 'Visie & Beleid', score: scores.visie, color: 'bg-purple-400' },
-    { label: 'Docentvaardigheden', score: scores.docent, color: 'bg-purple-500' },
-    { label: 'Onderwijs aan leerlingen', score: scores.onderwijs, color: 'bg-purple-600' },
-    { label: 'Infrastructuur', score: scores.infra, color: 'bg-purple-700' },
+    { label: getDimensionLabel('visie', onderwijstype), score: scores.visie, color: 'bg-purple-400' },
+    { label: getDimensionLabel('docent', onderwijstype), score: scores.docent, color: 'bg-purple-500' },
+    { label: getDimensionLabel('onderwijs', onderwijstype), score: scores.onderwijs, color: 'bg-purple-600' },
+    { label: getDimensionLabel('infra', onderwijstype), score: scores.infra, color: 'bg-purple-700' },
   ]
 
   return (

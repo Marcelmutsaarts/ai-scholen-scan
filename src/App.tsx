@@ -83,6 +83,7 @@ export default function App() {
           state !== 'welcome' && state !== 'context' && state !== 'results' && (
           <ScanQuestions
             section={state}
+            onderwijstype={context.onderwijstype as string | undefined}
             answers={answers}
             onAnswer={handleAnswer}
             onNext={goNext}
