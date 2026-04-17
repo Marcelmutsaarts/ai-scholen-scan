@@ -60,17 +60,17 @@ export default function ResultsPage({ answers, context, onRestart }: ResultsPage
         <EUReadiness percentage={scores.euReadiness} />
 
         {/* Radar Charts */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm mb-6">
+        <div id="pdf-chart-overview" className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm mb-6">
           <h3 className="font-semibold text-center mb-4 text-black">Overzicht dimensies</h3>
           <RadarChart scores={scores} onderwijstype={onderwijstype} />
         </div>
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <div id="pdf-chart-docent" className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <h3 className="font-semibold text-center mb-1 text-black">AI-geletterdheid docenten</h3>
             <p className="text-xs text-center text-gray-500 mb-3">5 domeinen (Raamwerk AI-geletterdheid)</p>
             <SubRadarChart points={docentPoints} />
           </div>
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <div id="pdf-chart-kies" className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <h3 className="font-semibold text-center mb-1 text-black">{getDimensionLabel('onderwijs', onderwijstype)}</h3>
             <p className="text-xs text-center text-gray-500 mb-3">4 onderdelen (raamwerk KIES)</p>
             <SubRadarChart points={kiesPoints} />

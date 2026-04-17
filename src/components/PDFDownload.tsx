@@ -322,31 +322,63 @@ export default function PDFDownload(props: PDFDownloadProps) {
       }
       layout.y += 22 + 4
 
+      // ── Spinnenwebben (overview + docent + kies) ──────────
+      const overviewCanvas = document.querySelector('#pdf-chart-overview canvas') as HTMLCanvasElement | null
+      const docentCanvas = document.querySelector('#pdf-chart-docent canvas') as HTMLCanvasElement | null
+      const kiesCanvas = document.querySelector('#pdf-chart-kies canvas') as HTMLCanvasElement | null
+
+      if (overviewCanvas) {
+        const imgW = 95
+        const imgH = imgW * (overviewCanvas.height / overviewCanvas.width)
+        layout.checkPageBreak(imgH + 12)
+        pdf.setFontSize(9)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(0, 0, 0)
+        pdf.text('Overzicht dimensies', layout.marginLeft + (layout.contentWidth - pdf.getTextWidth('Overzicht dimensies')) / 2, layout.y)
+        layout.y += 3
+        const imgX = layout.marginLeft + (layout.contentWidth - imgW) / 2
+        pdf.addImage(overviewCanvas.toDataURL('image/png', 1.0), 'PNG', imgX, layout.y, imgW, imgH)
+        layout.y += imgH + 4
+      }
+
+      if (docentCanvas && kiesCanvas) {
+        const subW = (layout.contentWidth - 6) / 2
+        const subH_d = subW * (docentCanvas.height / docentCanvas.width)
+        const subH_k = subW * (kiesCanvas.height / kiesCanvas.width)
+        const maxH = Math.max(subH_d, subH_k)
+        layout.checkPageBreak(maxH + 16)
+
+        // titles
+        pdf.setFontSize(8.5)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(0, 0, 0)
+        const titleD = 'AI-geletterdheid docenten'
+        const titleK = getDimensionLabel('onderwijs', onderwijstype)
+        pdf.text(titleD, layout.marginLeft + (subW - pdf.getTextWidth(titleD)) / 2, layout.y)
+        pdf.text(titleK, layout.marginLeft + subW + 6 + (subW - pdf.getTextWidth(titleK)) / 2, layout.y)
+        layout.y += 3
+        pdf.setFontSize(6.5)
+        pdf.setFont('helvetica', 'italic')
+        pdf.setTextColor(120, 120, 120)
+        const capD = 'Raamwerk AI-geletterdheid (aivoordocenten.nl)'
+        const capK = 'Raamwerk KIES (aivoordocenten.nl)'
+        pdf.text(capD, layout.marginLeft + (subW - pdf.getTextWidth(capD)) / 2, layout.y)
+        pdf.text(capK, layout.marginLeft + subW + 6 + (subW - pdf.getTextWidth(capK)) / 2, layout.y)
+        layout.y += 3
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(74, 85, 104)
+
+        pdf.addImage(docentCanvas.toDataURL('image/png', 1.0), 'PNG', layout.marginLeft, layout.y, subW, subH_d)
+        pdf.addImage(kiesCanvas.toDataURL('image/png', 1.0), 'PNG', layout.marginLeft + subW + 6, layout.y, subW, subH_k)
+        layout.y += maxH + 5
+      }
+
       // ── Scores per dimensie ───────────────────────────────
       layout.addSectionTitle('Scores per dimensie')
       layout.addScoreBar(getDimensionLabel('visie', onderwijstype), scores.visie)
       layout.addScoreBar(getDimensionLabel('docent', onderwijstype), scores.docent)
       layout.addScoreBar(getDimensionLabel('onderwijs', onderwijstype), scores.onderwijs)
       layout.addScoreBar(getDimensionLabel('infra', onderwijstype), scores.infra)
-      layout.y += 3
-
-      // Docent subdimensies
-      layout.addSubTitle('AI-geletterdheid docenten — vijf domeinen')
-      layout.addScoreBar('  A: Mensgerichte AI-mindset', scores.subdimensions.mindset)
-      layout.addScoreBar('  B: Ethiek en verantwoord gebruik', scores.subdimensions.ethiek)
-      layout.addScoreBar('  C: AI-kennis en vaardigheden', scores.subdimensions.kennis)
-      layout.addScoreBar('  D: AI-pedagogiek en didactiek', scores.subdimensions.pedagogiek)
-      layout.addScoreBar('  E: Digital agency', scores.subdimensions.agency)
-      layout.addCaption('Raamwerk AI-geletterdheid voor docenten (aivoordocenten.nl)')
-      layout.y += 2
-
-      // KIES subdimensies
-      layout.addSubTitle(`${getDimensionLabel('onderwijs', onderwijstype)} — KIES`)
-      layout.addScoreBar('  K: Kiezen', scores.kiesSubdimensions.kiezen)
-      layout.addScoreBar('  I: Instrueren', scores.kiesSubdimensions.instrueren)
-      layout.addScoreBar('  E: Evalueren', scores.kiesSubdimensions.evalueren)
-      layout.addScoreBar('  S: Spelregels', scores.kiesSubdimensions.spelregels)
-      layout.addCaption('Raamwerk KIES (aivoordocenten.nl)')
       layout.y += 4
 
       // ── Analyse per dimensie ──────────────────────────────
